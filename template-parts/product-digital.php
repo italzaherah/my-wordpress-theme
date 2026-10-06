@@ -40,7 +40,6 @@ $faq_raw      = (string) $product->get_meta( '_alz_tp_faq', true );
 $gallery_ids  = $product->get_gallery_image_ids();
 $main_image   = $product->get_image_id();
 $reviews_on   = comments_open() && 'yes' === get_option( 'woocommerce_enable_reviews', 'yes' );
-$review_count = $product->get_review_count();
 
 $can_buy = $product->is_purchasable() && $product->is_in_stock();
 ?>
@@ -168,10 +167,11 @@ $can_buy = $product->is_purchasable() && $product->is_in_stock();
 								if ( $q ) {
 									echo '</dd>';
 								}
-								$q = trim( substr( $line, strlen( 'س:' ) ) );
+								// The prefix may use the ASCII or the full-width colon (3 vs 5 bytes); strip it as text.
+								$q = trim( (string) preg_replace( '/^س\s*[:：]/u', '', $line ) );
 								echo '<dt>' . esc_html( $q ) . '</dt><dd>';
 							} elseif ( 0 === strpos( $line, 'ج:' ) || 0 === strpos( $line, 'ج：' ) ) {
-								echo esc_html( trim( substr( $line, strlen( 'ج:' ) ) ) );
+								echo esc_html( trim( (string) preg_replace( '/^ج\s*[:：]/u', '', $line ) ) );
 							} else {
 								echo esc_html( $line ) . ' ';
 							}
@@ -185,7 +185,8 @@ $can_buy = $product->is_purchasable() && $product->is_in_stock();
 				</details>
 			<?php endif; ?>
 
-			<?php if ( $reviews_on && $review_count > 0 ) : ?>
+			<?php /* Also shown with no reviews yet: it holds the form for the first review. */ ?>
+			<?php if ( $reviews_on ) : ?>
 				<details class="alz-accordion">
 					<summary><?php esc_html_e( 'المراجعات', 'alzaherah' ); ?></summary>
 					<div class="alz-accordion__body">
