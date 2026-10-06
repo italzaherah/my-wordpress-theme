@@ -1,6 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 520">
-<defs><linearGradient id="a" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#451447"/><stop offset=".55" stop-color="#a73974"/><stop offset="1" stop-color="#f0a56e"/></linearGradient><filter id="s"><feDropShadow dx="0" dy="18" stdDeviation="20" flood-opacity=".2"/></filter></defs>
-<rect width="800" height="520" rx="34" fill="url(#a)"/><path d="M0 90c190 80 250-60 430 10s215 120 370 20V0H0Z" fill="#fff" opacity=".1"/>
-<g transform="translate(220 65)" filter="url(#s)"><rect width="360" height="320" rx="24" fill="#fff"/><circle cx="180" cy="92" r="45" fill="#f0c4a9"/><path d="M135 90c4-58 87-67 94 2-27-3-42-23-48-41-11 22-25 35-46 39Z" fill="#2c2d43"/><path d="M110 176c22-39 118-39 140 0" fill="#5b2ccb" opacity=".2"/><rect x="66" y="213" width="228" height="14" rx="7" fill="#d9ddea"/><rect x="66" y="249" width="185" height="14" rx="7" fill="#d9ddea"/><rect x="66" y="285" width="205" height="14" rx="7" fill="#d9ddea"/><circle cx="308" cy="270" r="58" fill="#10b9b2"/><path d="M289 270l13 13 27-32" fill="none" stroke="#fff" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/></g>
-<text x="400" y="465" text-anchor="middle" font-family="Noto Kufi Arabic, sans-serif" font-size="30" font-weight="800" fill="#fff">السيرة الذاتية والمقابلات</text>
-</svg>

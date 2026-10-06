@@ -254,6 +254,59 @@ function alzaherah_course_query_args( $args = array() ) {
 }
 
 /**
+ * أوضاع التعلم الذاتي/المسجّل المستخدمة لفصل شبكة الرئيسية عن الدورات المجدولة.
+ *
+ * @return array<int,string>
+ */
+function alzaherah_self_paced_course_modes() {
+	if ( class_exists( 'ALZ_Courses' ) && method_exists( 'ALZ_Courses', 'self_paced_modes' ) ) {
+		return ALZ_Courses::self_paced_modes();
+	}
+	return array( 'self_paced', 'recorded' );
+}
+
+/**
+ * Meta query: دورات بمقاعد/موعد (ليست ذاتية أو مسجّلة).
+ *
+ * @return array<string,mixed>
+ */
+function alzaherah_scheduled_course_mode_meta_query() {
+	$modes = alzaherah_self_paced_course_modes();
+	return array(
+		'relation' => 'OR',
+		array(
+			'key'     => '_alz_course_mode',
+			'value'   => $modes,
+			'compare' => 'NOT IN',
+		),
+		array(
+			'key'     => '_alz_course_mode',
+			'compare' => 'NOT EXISTS',
+		),
+		array(
+			'key'     => '_alz_course_mode',
+			'value'   => '',
+			'compare' => '=',
+		),
+	);
+}
+
+/**
+ * Meta query: دورات إلكترونية ذاتية أو مسجّلة.
+ *
+ * @return array<int,array<string,mixed>>
+ */
+function alzaherah_self_paced_course_mode_meta_query() {
+	return array(
+		array(
+			'key'     => '_alz_course_mode',
+			'value'   => alzaherah_self_paced_course_modes(),
+			'compare' => 'IN',
+		),
+	);
+}
+
+/**
  * تصنيفات مرتبطة بدورات مؤكدة فقط، دون تغيير روابط product_cat الحالية.
  *
  * @param array $args وسائط get_terms.

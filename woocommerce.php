@@ -11,6 +11,69 @@
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * Run a standard single-product hook without rendering WooCommerce's default
+ * presentation a second time.
+ *
+ * The theme owns the visible title, gallery, price, add-to-cart and content
+ * layout. Third-party callbacks still need the canonical WooCommerce hooks,
+ * and WC_Structured_Data relies on woocommerce_single_product_summary to build
+ * Product JSON-LD. Temporarily removing only WooCommerce's stock renderers
+ * keeps those integrations working without duplicating the custom UI.
+ *
+ * @param string $hook Supported single-product hook.
+ */
+function alzaherah_render_single_product_hook( $hook ) {
+	$default_callbacks = array(
+		'woocommerce_before_single_product_summary' => array(
+			'woocommerce_show_product_sale_flash',
+			'woocommerce_show_product_images',
+		),
+		'woocommerce_single_product_summary' => array(
+			'woocommerce_template_single_title',
+			'woocommerce_template_single_rating',
+			'woocommerce_template_single_price',
+			'woocommerce_template_single_excerpt',
+			'woocommerce_template_single_add_to_cart',
+			'woocommerce_template_single_meta',
+			'woocommerce_template_single_sharing',
+		),
+		'woocommerce_after_single_product_summary' => array(
+			'woocommerce_output_product_data_tabs',
+			'woocommerce_upsell_display',
+			'woocommerce_output_related_products',
+		),
+	);
+
+	if ( ! isset( $default_callbacks[ $hook ] ) ) {
+		return;
+	}
+
+	$removed = array();
+	foreach ( $default_callbacks[ $hook ] as $callback ) {
+		$priority = has_action( $hook, $callback );
+		if ( false === $priority ) {
+			continue;
+		}
+		remove_action( $hook, $callback, $priority );
+		$removed[] = array( $callback, $priority );
+	}
+
+	ob_start();
+	do_action( $hook );
+	$extension_markup = ob_get_clean();
+
+	foreach ( $removed as $callback ) {
+		add_action( $hook, $callback[0], $callback[1] );
+	}
+
+	if ( '' !== trim( $extension_markup ) ) {
+		echo '<div class="alz-woocommerce-extension-slot alz-woocommerce-extension-slot--' . esc_attr( sanitize_html_class( $hook ) ) . '">';
+		echo $extension_markup; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Output comes from registered WooCommerce/plugin callbacks.
+		echo '</div>';
+	}
+}
+
 get_header();
 
 $alz_post_type         = get_query_var( 'post_type' );
@@ -48,7 +111,7 @@ if ( function_exists( 'is_shop' ) && ( is_shop() || is_product_taxonomy() || $al
 				<div class="courses-hero-badges" aria-label="<?php esc_attr_e( 'مزايا التسجيل', 'alzaherah' ); ?>">
 					<span>✓ <?php esc_html_e( 'تسجيل سريع', 'alzaherah' ); ?></span>
 					<span>✓ <?php esc_html_e( 'دفع آمن', 'alzaherah' ); ?></span>
-					<span>✓ <?php esc_html_e( 'فاتورة إلكترونية', 'alzaherah' ); ?></span>
+					<span>✓ <?php esc_html_e( 'تأكيد الطلب عبر البريد الإلكتروني', 'alzaherah' ); ?></span>
 				</div>
 			</div>
 		</section>
@@ -139,6 +202,26 @@ if ( function_exists( 'is_shop' ) && ( is_shop() || is_product_taxonomy() || $al
 		</section>
 	</main>
 	<?php
+elseif ( function_exists( 'is_product' ) && is_product() && post_password_required() ) :
+	// Match WooCommerce's single-product password gate before any custom metadata,
+	// promotional images, purchase controls or extension callbacks are rendered.
+	?>
+	<main id="main" class="section" role="main"><div class="container"><?php echo get_the_password_form(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- WordPress-generated password form. ?></div></main>
+	<?php
+elseif ( function_exists( 'is_product' ) && is_product() && function_exists( 'alz_core_is_exam_product' ) && alz_core_is_exam_product( get_queried_object_id() ) ) :
+
+	while ( have_posts() ) :
+		the_post();
+		get_template_part( 'template-parts/product', 'exam' );
+	endwhile;
+
+elseif ( function_exists( 'is_product' ) && is_product() && function_exists( 'alzaherah_is_training_product_id' ) && alzaherah_is_training_product_id( get_queried_object_id() ) ) :
+
+	while ( have_posts() ) :
+		the_post();
+		get_template_part( 'template-parts/product', 'digital' );
+	endwhile;
+
 elseif ( function_exists( 'is_product' ) && is_product() && ( ! function_exists( 'alzaherah_is_confirmed_course_product' ) || alzaherah_is_confirmed_course_product( get_queried_object_id() ) ) ) :
 
 	while ( have_posts() ) :
@@ -168,6 +251,13 @@ elseif ( function_exists( 'is_product' ) && is_product() && ( ! function_exists(
 		$alz_certificate_type = get_post_meta( get_the_ID(), '_alz_certificate_type', true );
 		$alz_certificate_by   = get_post_meta( get_the_ID(), '_alz_certificate_by', true );
 		$alz_status   = function_exists( 'alzaherah_course_effective_status' ) ? alzaherah_course_effective_status( $alz_product ) : 'available';
+		$alz_is_self_paced = function_exists( 'alz_core_course_is_self_paced' ) && alz_core_course_is_self_paced( $alz_product );
+		$alz_el_linked     = $alz_is_self_paced && function_exists( 'alz_elearning_product_is_linked' ) && alz_elearning_product_is_linked( get_the_ID() );
+		$alz_el_enrolled   = $alz_el_linked && is_user_logged_in() && function_exists( 'alz_elearning_user_enrolled' ) && alz_elearning_user_enrolled( get_the_ID() );
+		$alz_el_stats      = $alz_el_linked && function_exists( 'alz_elearning_course_card_stats' ) ? alz_elearning_course_card_stats( get_the_ID() ) : array();
+		$alz_el_outline    = $alz_el_linked && function_exists( 'alz_elearning_course_outline' ) ? alz_elearning_course_outline( get_the_ID() ) : array();
+		$alz_el_progress   = $alz_el_enrolled && function_exists( 'alz_elearning_progress_percent' ) ? alz_elearning_progress_percent( get_the_ID() ) : null;
+		$alz_el_learn_url  = $alz_el_enrolled && function_exists( 'alz_elearning_learning_url' ) ? alz_elearning_learning_url( get_the_ID() ) : '';
 		$alz_can_register = 'available' === $alz_status && $alz_product->is_purchasable() && $alz_product->is_in_stock();
 		$alz_is_simple = $alz_product->is_type( 'simple' );
 		$alz_register_url = $alz_can_register && $alz_is_simple
@@ -179,7 +269,7 @@ elseif ( function_exists( 'is_product' ) && is_product() && ( ! function_exists(
 		$alz_terms    = get_the_terms( get_the_ID(), 'product_cat' );
 		$alz_cat      = ( $alz_terms && ! is_wp_error( $alz_terms ) ) ? $alz_terms[0]->name : __( 'دورة تدريبية', 'alzaherah' );
 		?>
-		<main id="main" class="course-single-page" role="main">
+		<main id="main" <?php wc_product_class( 'course-single-page', $alz_product ); ?> role="main">
 
 			<section class="courses-hero course-single-hero">
 				<div class="container">
@@ -197,6 +287,7 @@ elseif ( function_exists( 'is_product' ) && is_product() && ( ! function_exists(
 					<div class="course-single-content">
 
 						<?php do_action( 'woocommerce_before_single_product' ); // إشعارات السلة والأخطاء. ?>
+						<?php alzaherah_render_single_product_hook( 'woocommerce_before_single_product_summary' ); ?>
 
 						<?php if ( has_post_thumbnail() ) : ?>
 							<div class="course-single-image">
@@ -207,8 +298,8 @@ elseif ( function_exists( 'is_product' ) && is_product() && ( ! function_exists(
 						<section class="course-mobile-quick-enroll" aria-label="<?php esc_attr_e( 'التسجيل في الدورة', 'alzaherah' ); ?>">
 							<div>
 								<?php if ( function_exists( 'alzaherah_course_status_badge' ) ) { alzaherah_course_status_badge( $alz_product ); } ?>
-								<strong class="course-mobile-price"><?php echo wp_kses_post( $alz_product->get_price_html() ); ?></strong>
-								<small><?php echo esc_html( $alz_date_display ? sprintf( __( 'تبدأ في %s', 'alzaherah' ), $alz_date_display ) : $alz_date_label ); ?></small>
+								<strong class="course-mobile-price"><?php echo wp_kses_post( function_exists( 'alzaherah_course_price_html' ) ? alzaherah_course_price_html( $alz_product ) : $alz_product->get_price_html() ); ?></strong>
+								<small><?php echo esc_html( $alz_is_self_paced ? __( 'تعلّم ذاتي — يبدأ فور تأكيد الدفع', 'alzaherah' ) : ( $alz_date_display ? sprintf( __( 'تبدأ في %s', 'alzaherah' ), $alz_date_display ) : $alz_date_label ) ); ?></small>
 							</div>
 							<?php if ( $alz_can_register ) : ?>
 								<a class="btn btn-primary" href="<?php echo esc_url( $alz_register_url ); ?>"><?php esc_html_e( 'سجّل الآن', 'alzaherah' ); ?></a>
@@ -221,6 +312,41 @@ elseif ( function_exists( 'is_product' ) && is_product() && ( ! function_exists(
 							<h2><?php esc_html_e( 'عن الدورة', 'alzaherah' ); ?></h2>
 							<?php the_content(); ?>
 						</article>
+
+						<?php if ( $alz_el_outline ) : ?>
+							<article class="course-single-requirements course-elearning-outline">
+								<h2><?php esc_html_e( 'محتوى الدورة', 'alzaherah' ); ?></h2>
+								<?php if ( $alz_el_enrolled && null !== $alz_el_progress ) : ?>
+									<div class="course-elearning-progress" role="status">
+										<div class="course-elearning-progress-head">
+											<strong><?php esc_html_e( 'نسبة إنجازك', 'alzaherah' ); ?></strong>
+											<span><?php echo esc_html( number_format_i18n( round( $alz_el_progress ) ) ); ?>%</span>
+										</div>
+										<div class="course-elearning-progress-bar"><span style="width:<?php echo esc_attr( round( $alz_el_progress ) ); ?>%"></span></div>
+									</div>
+								<?php endif; ?>
+								<ol class="course-elearning-units">
+									<?php foreach ( $alz_el_outline as $alz_el_topic ) : ?>
+										<li class="course-elearning-unit">
+											<strong><?php echo esc_html( $alz_el_topic['title'] ); ?></strong>
+											<?php if ( ! empty( $alz_el_topic['items'] ) ) : ?>
+												<ul>
+													<?php foreach ( $alz_el_topic['items'] as $alz_el_item ) : ?>
+														<li>
+															<span aria-hidden="true"><?php echo 'quiz' === $alz_el_item['type'] ? '✎' : '▶'; ?></span>
+															<?php echo esc_html( $alz_el_item['title'] ); ?>
+															<?php if ( 'quiz' === $alz_el_item['type'] ) : ?>
+																<em class="course-elearning-tag"><?php esc_html_e( 'اختبار قصير', 'alzaherah' ); ?></em>
+															<?php endif; ?>
+														</li>
+													<?php endforeach; ?>
+												</ul>
+											<?php endif; ?>
+										</li>
+									<?php endforeach; ?>
+								</ol>
+							</article>
+						<?php endif; ?>
 
 						<?php if ( $alz_reqs ) : ?>
 							<article class="course-single-requirements">
@@ -247,6 +373,8 @@ elseif ( function_exists( 'is_product' ) && is_product() && ( ! function_exists(
 							<p><a href="<?php echo esc_url( home_url( '/terms/' ) ); ?>"><?php esc_html_e( 'شروط التسجيل والحضور', 'alzaherah' ); ?></a> · <a href="<?php echo esc_url( home_url( '/refund-policy/' ) ); ?>"><?php esc_html_e( 'سياسة الإلغاء والاسترجاع', 'alzaherah' ); ?></a></p>
 						</article>
 
+						<?php alzaherah_render_single_product_hook( 'woocommerce_single_product_summary' ); ?>
+
 					</div>
 
 					<aside id="course-registration-options" class="course-single-sidebar">
@@ -255,12 +383,28 @@ elseif ( function_exists( 'is_product' ) && is_product() && ( ! function_exists(
 
 							<?php if ( function_exists( 'alzaherah_course_status_badge' ) ) { alzaherah_course_status_badge( $alz_product ); } ?>
 
-							<div class="course-info-price"><?php echo wp_kses_post( $alz_product->get_price_html() ); ?></div>
+							<div class="course-info-price"><?php echo wp_kses_post( function_exists( 'alzaherah_course_price_html' ) ? alzaherah_course_price_html( $alz_product ) : $alz_product->get_price_html() ); ?></div>
 
 							<ul class="course-info-rows">
-								<li><span aria-hidden="true">📅</span><div><strong><?php esc_html_e( 'تاريخ البدء', 'alzaherah' ); ?></strong><small><?php echo esc_html( $alz_date_label ); ?></small></div></li>
-								<?php if ( $alz_time || $alz_days ) : ?>
-									<li><span aria-hidden="true">🕘</span><div><strong><?php esc_html_e( 'الوقت والمدة', 'alzaherah' ); ?></strong><small><?php echo esc_html( trim( $alz_time . ( $alz_days ? ' · ' . sprintf( _n( 'يوم واحد', '%s أيام', (int) $alz_days, 'alzaherah' ), number_format_i18n( (int) $alz_days ) ) : '' ), ' ·' ) ); ?></small></div></li>
+								<?php if ( $alz_is_self_paced ) : ?>
+									<li><span aria-hidden="true">⚡</span><div><strong><?php esc_html_e( 'بداية التعلم', 'alzaherah' ); ?></strong><small><?php esc_html_e( 'فورًا بعد تأكيد الدفع', 'alzaherah' ); ?></small></div></li>
+									<?php if ( ! empty( $alz_el_stats['topics'] ) || ! empty( $alz_el_stats['lessons'] ) ) : ?>
+										<li><span aria-hidden="true">▤</span><div><strong><?php esc_html_e( 'المحتوى', 'alzaherah' ); ?></strong><small><?php
+											$alz_el_parts = array();
+											if ( ! empty( $alz_el_stats['topics'] ) ) {
+												$alz_el_parts[] = sprintf( __( '%s وحدات', 'alzaherah' ), number_format_i18n( absint( $alz_el_stats['topics'] ) ) );
+											}
+											if ( ! empty( $alz_el_stats['lessons'] ) ) {
+												$alz_el_parts[] = sprintf( __( '%s درسًا', 'alzaherah' ), number_format_i18n( absint( $alz_el_stats['lessons'] ) ) );
+											}
+											echo esc_html( implode( ' · ', $alz_el_parts ) );
+										?></small></div></li>
+									<?php endif; ?>
+								<?php else : ?>
+									<li><span aria-hidden="true">📅</span><div><strong><?php esc_html_e( 'تاريخ البدء', 'alzaherah' ); ?></strong><small><?php echo esc_html( $alz_date_label ); ?></small></div></li>
+									<?php if ( $alz_time || $alz_days ) : ?>
+										<li><span aria-hidden="true">🕘</span><div><strong><?php esc_html_e( 'الوقت والمدة', 'alzaherah' ); ?></strong><small><?php echo esc_html( trim( $alz_time . ( $alz_days ? ' · ' . sprintf( _n( 'يوم واحد', '%s أيام', (int) $alz_days, 'alzaherah' ), number_format_i18n( (int) $alz_days ) ) : '' ), ' ·' ) ); ?></small></div></li>
+									<?php endif; ?>
 								<?php endif; ?>
 								<?php if ( $alz_mode ) : ?>
 									<li><span aria-hidden="true">💻</span><div><strong><?php esc_html_e( 'نمط التقديم', 'alzaherah' ); ?></strong><small><?php echo esc_html( $alz_mode ); ?></small></div></li>
@@ -276,7 +420,12 @@ elseif ( function_exists( 'is_product' ) && is_product() && ( ! function_exists(
 								<?php endif; ?>
 							</ul>
 
-							<?php if ( in_array( $alz_status, array( 'postponed', 'cancelled' ), true ) ) : ?>
+							<?php if ( $alz_el_enrolled && $alz_el_learn_url ) : ?>
+
+								<div class="course-status-notice is-enrolled"><?php esc_html_e( 'أنت مسجل في هذه الدورة ويمكنك متابعة التعلم في أي وقت.', 'alzaherah' ); ?></div>
+								<a class="btn btn-primary" style="width:100%;text-align:center" href="<?php echo esc_url( $alz_el_learn_url ); ?>"><?php echo esc_html( null !== $alz_el_progress && $alz_el_progress > 0 ? __( 'متابعة التعلم', 'alzaherah' ) : __( 'ابدأ التعلم الآن', 'alzaherah' ) ); ?></a>
+
+							<?php elseif ( in_array( $alz_status, array( 'postponed', 'cancelled' ), true ) ) : ?>
 
 								<div class="course-status-notice is-<?php echo esc_attr( $alz_status ); ?>">
 									<?php echo esc_html( 'postponed' === $alz_status ? __( 'هذه الدورة مؤجلة حاليًا وسيُعلن عن موعدها الجديد. تواصل معنا لأولوية الحجز.', 'alzaherah' ) : __( 'أُلغيت هذه الدورة. تصفّح بقية الدورات المتاحة أو تواصل معنا.', 'alzaherah' ) ); ?>
@@ -311,8 +460,8 @@ elseif ( function_exists( 'is_product' ) && is_product() && ( ! function_exists(
 						<div class="registration-trust-card">
 							<h3><?php esc_html_e( 'تسجيلك محمي', 'alzaherah' ); ?></h3>
 							<ul>
-								<li><span>✓</span> <?php esc_html_e( 'دفع مشفّر عبر مدى وفيزا وماستركارد وApple Pay', 'alzaherah' ); ?></li>
-								<li><span>✓</span> <?php esc_html_e( 'تأكيد المقعد والفاتورة فور إتمام الدفع', 'alzaherah' ); ?></li>
+								<li><span>✓</span> <?php esc_html_e( 'تظهر وسيلة الدفع المفعّلة وتفاصيلها قبل تأكيد الطلب', 'alzaherah' ); ?></li>
+								<li><span>✓</span> <?php esc_html_e( 'تأكيد المقعد عبر البريد فور إتمام الدفع', 'alzaherah' ); ?></li>
 								<li><span>✓</span> <?php esc_html_e( 'إلغاء واسترجاع وفق سياسة معلنة وواضحة', 'alzaherah' ); ?></li>
 							</ul>
 						</div>
@@ -322,12 +471,18 @@ elseif ( function_exists( 'is_product' ) && is_product() && ( ! function_exists(
 				</div>
 			</section>
 
+			<div class="container">
+				<?php alzaherah_render_single_product_hook( 'woocommerce_after_single_product_summary' ); ?>
+			</div>
+
 			<div class="course-mobile-sticky" aria-label="<?php esc_attr_e( 'إجراء التسجيل السريع', 'alzaherah' ); ?>">
 				<div>
-					<strong><?php echo wp_kses_post( $alz_product->get_price_html() ); ?></strong>
+					<strong><?php echo wp_kses_post( function_exists( 'alzaherah_course_price_html' ) ? alzaherah_course_price_html( $alz_product ) : $alz_product->get_price_html() ); ?></strong>
 					<small><?php echo esc_html( function_exists( 'alzaherah_course_status_label' ) ? alzaherah_course_status_label( $alz_status ) : __( 'حالة التسجيل', 'alzaherah' ) ); ?></small>
 				</div>
-				<?php if ( $alz_can_register ) : ?>
+				<?php if ( $alz_el_enrolled && $alz_el_learn_url ) : ?>
+					<a href="<?php echo esc_url( $alz_el_learn_url ); ?>"><?php esc_html_e( 'متابعة التعلم', 'alzaherah' ); ?></a>
+				<?php elseif ( $alz_can_register ) : ?>
 					<a href="<?php echo esc_url( $alz_register_url ); ?>"><?php esc_html_e( 'سجّل الآن', 'alzaherah' ); ?></a>
 				<?php else : ?>
 					<a class="is-disabled" href="<?php echo esc_url( function_exists( 'alzaherah_shop_url' ) ? alzaherah_shop_url() : home_url( '/shop/' ) ); ?>"><?php echo esc_html( 'ended' === $alz_status ? __( 'انتهى التسجيل', 'alzaherah' ) : __( 'دورات أخرى', 'alzaherah' ) ); ?></a>
@@ -335,6 +490,7 @@ elseif ( function_exists( 'is_product' ) && is_product() && ( ! function_exists(
 			</div>
 
 		</main>
+		<?php do_action( 'woocommerce_after_single_product' ); ?>
 		<?php
 	endwhile;
 

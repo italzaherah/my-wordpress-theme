@@ -12,30 +12,58 @@ get_header();
 $shop_url    = function_exists( 'alzaherah_shop_url' ) ? alzaherah_shop_url() : home_url( '/shop/' );
 $account_url = function_exists( 'alzaherah_account_url' ) ? alzaherah_account_url() : home_url( '/my-account/' );
 $signup_url  = function_exists( 'alzaherah_signup_url' ) ? alzaherah_signup_url() : add_query_arg( 'view', 'register', $account_url );
+$exams_url   = function_exists( 'alzaherah_exams_page_url' ) ? alzaherah_exams_page_url() : home_url( '/exams/' );
 
 $hero_badge = get_theme_mod( 'alzaherah_hero_badge', __( 'منصتك نحو الاحتراف', 'alzaherah' ) );
 $hero_title = get_theme_mod( 'alzaherah_hero_title', __( 'طوّر مهاراتك مع أفضل الدورات التدريبية', 'alzaherah' ) );
 $hero_text  = get_theme_mod( 'alzaherah_hero_text', __( 'سجّل، ادفع بأمان، وابدأ رحلتك التعليمية فورًا عبر تجربة عربية متكاملة وسهلة.', 'alzaherah' ) );
+
+$alz_home_catalog_tax = array(
+	array(
+		'taxonomy' => 'product_visibility',
+		'field'    => 'name',
+		'terms'    => array( 'exclude-from-catalog' ),
+		'operator' => 'NOT IN',
+	),
+);
 
 $alz_home_course_args = array(
 	'post_status'                 => 'publish',
 	'posts_per_page'              => 6,
 	'alz_available_courses_first' => 'upcoming',
 	'orderby'                     => array( 'menu_order' => 'ASC', 'date' => 'DESC' ),
-	'tax_query'                   => array(
-		array(
-			'taxonomy' => 'product_visibility',
-			'field'    => 'name',
-			'terms'    => array( 'exclude-from-catalog' ),
-			'operator' => 'NOT IN',
-		),
-	),
+	'tax_query'                   => $alz_home_catalog_tax,
+	'meta_query'                  => function_exists( 'alzaherah_scheduled_course_mode_meta_query' )
+		? alzaherah_scheduled_course_mode_meta_query()
+		: array(),
 );
 $courses = new WP_Query(
 	function_exists( 'alzaherah_course_query_args' )
 		? alzaherah_course_query_args( $alz_home_course_args )
 		: array_merge( array( 'post_type' => 'product' ), $alz_home_course_args )
 );
+
+$alz_self_paced_args = array(
+	'post_status'    => 'publish',
+	'posts_per_page' => 4,
+	'orderby'        => array( 'menu_order' => 'ASC', 'date' => 'DESC' ),
+	'no_found_rows'  => true,
+	'tax_query'      => $alz_home_catalog_tax,
+	'meta_query'     => function_exists( 'alzaherah_self_paced_course_mode_meta_query' )
+		? alzaherah_self_paced_course_mode_meta_query()
+		: array(),
+);
+$alz_self_paced = new WP_Query(
+	function_exists( 'alzaherah_course_query_args' )
+		? alzaherah_course_query_args( $alz_self_paced_args )
+		: array_merge( array( 'post_type' => 'product' ), $alz_self_paced_args )
+);
+
+$alz_home_shown_course_ids = array_merge(
+	wp_list_pluck( $courses->posts, 'ID' ),
+	wp_list_pluck( $alz_self_paced->posts, 'ID' )
+);
+$alz_home_shown_course_ids = array_values( array_filter( array_map( 'absint', $alz_home_shown_course_ids ) ) );
 
 $alz_training_products     = null;
 $alz_training_products_url = home_url( '/training-products/' );
@@ -212,49 +240,39 @@ $alz_home_content_image = static function ( $post_id ) {
 	<section class="alz3-hero" aria-labelledby="hero-title">
 		<div class="alz3-hero-pattern" aria-hidden="true"></div>
 		<div class="container alz3-hero-inner">
-			<div class="alz3-badge"><span aria-hidden="true">🎓</span><?php echo esc_html( $hero_badge ); ?></div>
-			<h1 id="hero-title"><?php echo wp_kses_post( alzaherah_highlight_hero_title( $hero_title ) ); ?></h1>
-			<p><?php echo esc_html( $hero_text ); ?></p>
+			<div class="alz3-badge"><span aria-hidden="true">🎓</span><?php alzaherah_copy_e( 'hero_badge', $hero_badge ); ?></div>
+			<h1 id="hero-title" data-alz-copy="hero_title" data-alz-copy-highlight="hero"><?php echo wp_kses_post( alzaherah_highlight_hero_title( alzaherah_copy_value( 'hero_title', $hero_title ) ) ); ?></h1>
+			<p><?php alzaherah_copy_e( 'hero_text', $hero_text ); ?></p>
 
 			<div class="alz3-hero-actions">
-				<a class="btn alz3-primary-cta" href="<?php echo esc_url( $shop_url ); ?>">
-					<?php esc_html_e( 'تصفّح الدورات', 'alzaherah' ); ?><?php echo alzaherah_ui_arrow(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+				<a class="btn alz3-primary-cta" data-alz-copy-href="hero_courses_url" href="<?php echo esc_url( alzaherah_copy_value( 'hero_courses_url', $shop_url ) ); ?>">
+					<?php alzaherah_copy_e( 'hero_courses_label', 'تصفّح الدورات' ); ?><?php echo alzaherah_ui_arrow(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+				</a>
+				<a class="btn alz3-secondary-cta" data-alz-copy-href="hero_exams_url" href="<?php echo esc_url( alzaherah_copy_value( 'hero_exams_url', $exams_url ) ); ?>">
+					<?php alzaherah_copy_e( 'hero_exams_label', 'الاختبارات' ); ?>
 				</a>
 				<?php if ( is_user_logged_in() ) : ?>
-					<a class="btn alz3-secondary-cta" href="<?php echo esc_url( $account_url ); ?>"><?php esc_html_e( 'فتح لوحة حسابي', 'alzaherah' ); ?></a>
+					<a class="btn alz3-secondary-cta" data-alz-copy-href="hero_account_url" href="<?php echo esc_url( alzaherah_copy_value( 'hero_account_url', $account_url ) ); ?>"><?php alzaherah_copy_e( 'hero_account_label', 'فتح لوحة حسابي' ); ?></a>
 				<?php else : ?>
-					<a class="btn alz3-secondary-cta" href="<?php echo esc_url( $signup_url ); ?>"><?php esc_html_e( 'أنشئ حسابك مجانًا', 'alzaherah' ); ?></a>
+					<a class="btn alz3-secondary-cta" data-alz-copy-href="hero_signup_url" href="<?php echo esc_url( alzaherah_copy_value( 'hero_signup_url', $signup_url ) ); ?>"><?php alzaherah_copy_e( 'hero_signup_label', 'أنشئ حسابك مجانًا' ); ?></a>
 				<?php endif; ?>
 			</div>
+			<nav class="alz3-hero-paths" aria-label="<?php esc_attr_e( 'ماذا يقدم المركز', 'alzaherah' ); ?>">
+				<a data-alz-copy-href="hero_products_url" href="<?php echo esc_url( alzaherah_copy_value( 'hero_products_url', $alz_training_products_url ) ); ?>"><?php alzaherah_copy_e( 'hero_products_label', 'المنتجات التدريبية' ); ?></a>
+				<a data-alz-copy-href="hero_contact_url" href="<?php echo esc_url( alzaherah_copy_value( 'hero_contact_url', home_url( '/contact/' ) ) ); ?>"><?php alzaherah_copy_e( 'hero_contact_label', 'تواصل معنا' ); ?></a>
+			</nav>
 
 		</div>
 	</section>
 
-	<div class="alz3-trust-wrap" aria-label="<?php esc_attr_e( 'مزايا المنصة', 'alzaherah' ); ?>">
+	<div class="alz3-trust-wrap alz3-trust-impact" aria-label="<?php esc_attr_e( 'ثقة المركز وأثره', 'alzaherah' ); ?>">
 		<div class="container">
 			<div class="alz3-trust-grid">
-				<article><span aria-hidden="true">🛡️</span><div><strong><?php esc_html_e( 'دفع آمن ومشفّر', 'alzaherah' ); ?></strong><small><?php esc_html_e( 'مدى، Visa، Mastercard وApple Pay', 'alzaherah' ); ?></small></div></article>
-				<article><span aria-hidden="true">🏅</span><div><strong><?php esc_html_e( 'شهادات معتمدة', 'alzaherah' ); ?></strong><small><?php esc_html_e( 'شهادة إتمام لكل دورة مسجلة', 'alzaherah' ); ?></small></div></article>
-				<article><span aria-hidden="true">⚡</span><div><strong><?php esc_html_e( 'وصول فوري', 'alzaherah' ); ?></strong><small><?php esc_html_e( 'تأكيد التسجيل والفاتورة بعد الدفع', 'alzaherah' ); ?></small></div></article>
+				<article><span aria-hidden="true">🛡️</span><div><strong><?php alzaherah_copy_e( 'trust_0_title', 'دفع عبر قناة محمية' ); ?></strong><small><?php alzaherah_copy_e( 'trust_0_text', 'تظهر الوسائل المفعّلة قبل تأكيد الطلب' ); ?></small></div></article>
+				<article><span aria-hidden="true">🏅</span><div><strong><?php alzaherah_copy_e( 'trust_1_title', 'متطلبات واضحة' ); ?></strong><small><?php alzaherah_copy_e( 'trust_1_text', 'نوع الشهادة والاعتماد — إن وُجدا — موضحان في صفحة الدورة' ); ?></small></div></article>
+				<article><span aria-hidden="true">⚡</span><div><strong><?php alzaherah_copy_e( 'trust_2_title', 'تأكيد موثّق' ); ?></strong><small><?php alzaherah_copy_e( 'trust_2_text', 'يُرسل التأكيد بعد ثبوت حالة الدفع أو اعتماده' ); ?></small></div></article>
 			</div>
-		</div>
-	</div>
-
-	<?php if ( function_exists( 'alz_render_home_announcements' ) ) : ?>
-		<?php alz_render_home_announcements(); ?>
-	<?php elseif ( function_exists( 'alzaherah_promo_strip' ) ) : ?>
-		<?php alzaherah_promo_strip(); ?>
-	<?php endif; ?>
-
-	<section class="section alz3-impact" aria-labelledby="home-impact-title">
-		<div class="container">
-			<div class="alz3-centered-heading alz3-impact-heading">
-				<span class="eyebrow"><?php esc_html_e( 'أثر ينمو بثقتكم', 'alzaherah' ); ?></span>
-				<h2 class="section-title" id="home-impact-title"><?php esc_html_e( 'أثرنا بالأرقام', 'alzaherah' ); ?></h2>
-				<p class="section-copy"><?php esc_html_e( 'خبرة تدريبية ممتدة نضعها في خدمة الأفراد والمنشآت.', 'alzaherah' ); ?></p>
-			</div>
-
-			<dl class="alz3-impact-grid">
+			<dl class="alz3-impact-grid alz3-impact-grid--compact">
 				<?php foreach ( $alz_home_metric_labels as $alz_metric_key => $alz_metric_label ) : ?>
 					<?php $alz_metric_value = $alz_home_metrics[ $alz_metric_key ]; ?>
 					<div class="alz3-impact-card">
@@ -266,17 +284,23 @@ $alz_home_content_image = static function ( $post_id ) {
 				<?php endforeach; ?>
 			</dl>
 		</div>
-	</section>
+	</div>
+
+	<?php if ( function_exists( 'alz_render_home_announcements' ) ) : ?>
+		<?php alz_render_home_announcements(); ?>
+	<?php elseif ( function_exists( 'alzaherah_promo_strip' ) ) : ?>
+		<?php alzaherah_promo_strip(); ?>
+	<?php endif; ?>
 
 	<section class="alz3-course-section section" aria-labelledby="courses-title">
 		<div class="container">
 			<div class="section-heading alz3-section-heading">
 				<div class="text">
-					<span class="eyebrow"><?php esc_html_e( 'ابدأ التعلم الآن', 'alzaherah' ); ?></span>
-					<h2 class="section-title" id="courses-title"><?php esc_html_e( 'الدورات المتاحة للتسجيل', 'alzaherah' ); ?></h2>
-					<p class="section-copy"><?php esc_html_e( 'اعثر على الدورة المناسبة حسب المجال، السعر، الموعد ونمط الحضور.', 'alzaherah' ); ?></p>
+					<span class="eyebrow"><?php alzaherah_copy_e( 'courses_eyebrow', 'برامج بمقاعد وموعد' ); ?></span>
+					<h2 class="section-title" id="courses-title"><?php alzaherah_copy_e( 'courses_title', 'الدورات المتاحة للتسجيل' ); ?></h2>
+					<p class="section-copy"><?php alzaherah_copy_e( 'courses_text', 'دورات حضورية أو عن بُعد أو مدمجة. اختر المجال والموعد ثم أكمل التسجيل.' ); ?></p>
 				</div>
-				<a class="alz3-view-all" href="<?php echo esc_url( $shop_url ); ?>"><?php esc_html_e( 'عرض جميع الدورات', 'alzaherah' ); ?> <?php echo alzaherah_ui_arrow(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></a>
+				<a class="alz3-view-all" data-alz-copy-href="courses_url" href="<?php echo esc_url( alzaherah_copy_value( 'courses_url', $shop_url ) ); ?>"><?php alzaherah_copy_e( 'courses_label', 'عرض جميع الدورات' ); ?> <?php echo alzaherah_ui_arrow(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></a>
 			</div>
 
 			<div class="alz3-filter-shell">
@@ -321,16 +345,104 @@ $alz_home_content_image = static function ( $post_id ) {
 		</div>
 	</section>
 
+	<?php if ( $alz_self_paced->have_posts() ) : ?>
+		<section class="alz3-course-section alz3-self-paced-section section" aria-labelledby="self-paced-title">
+			<div class="container">
+				<div class="section-heading alz3-section-heading">
+					<div class="text">
+						<span class="eyebrow"><?php alzaherah_copy_e( 'self_paced_eyebrow', 'ابدأ فور تأكيد الدفع' ); ?></span>
+						<h2 class="section-title" id="self-paced-title"><?php alzaherah_copy_e( 'self_paced_title', 'التعلم الذاتي' ); ?></h2>
+						<p class="section-copy"><?php alzaherah_copy_e( 'self_paced_text', 'دورات إلكترونية ذاتية أو مسجّلة تصل إلى حسابك مباشرة بعد ثبوت الدفع، بلا موعد حضور.' ); ?></p>
+					</div>
+					<a class="alz3-view-all" data-alz-copy-href="self_paced_url" href="<?php echo esc_url( alzaherah_copy_value( 'self_paced_url', $shop_url ) ); ?>"><?php alzaherah_copy_e( 'self_paced_label', 'عرض جميع الدورات' ); ?> <?php echo alzaherah_ui_arrow(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></a>
+				</div>
+				<div class="courses-grid courses-catalog-grid alz3-home-courses-grid">
+					<?php
+					while ( $alz_self_paced->have_posts() ) :
+						$alz_self_paced->the_post();
+						$alz_self_paced_product = function_exists( 'wc_get_product' ) ? wc_get_product( get_the_ID() ) : null;
+						if ( ! $alz_self_paced_product ) {
+							continue;
+						}
+						get_template_part(
+							'template-parts/course',
+							'card',
+							array(
+								'product' => $alz_self_paced_product,
+								'heading' => 'h3',
+							)
+						);
+					endwhile;
+					wp_reset_postdata();
+					?>
+				</div>
+			</div>
+		</section>
+	<?php endif; ?>
+
+	<?php
+	$alz_home_exams = array();
+	if ( class_exists( 'ALZ_Exams' ) && function_exists( 'wc_get_product' ) ) {
+		$alz_home_exam_ids = get_posts(
+			ALZ_Exams::query_args(
+				array(
+					'post_status'    => 'publish',
+					'posts_per_page' => 3,
+					'orderby'        => 'menu_order title',
+					'order'          => 'ASC',
+					'fields'         => 'ids',
+					'no_found_rows'  => true,
+				)
+			)
+		);
+		foreach ( $alz_home_exam_ids as $alz_home_exam_id ) {
+			$alz_home_exam_product = wc_get_product( $alz_home_exam_id );
+			if ( $alz_home_exam_product && $alz_home_exam_product->is_visible() ) {
+				$alz_home_exams[] = $alz_home_exam_product;
+			}
+		}
+	}
+	if ( $alz_home_exams ) :
+		?>
+		<section class="alz3-course-section alz3-exams-section section" aria-labelledby="home-exams-title">
+			<div class="container">
+				<div class="section-heading alz3-section-heading">
+					<div class="text">
+						<span class="eyebrow"><?php alzaherah_copy_e( 'exams_eyebrow', 'قِس مستواك الآن' ); ?></span>
+						<h2 class="section-title" id="home-exams-title"><?php alzaherah_copy_e( 'exams_title', 'الاختبارات المتاحة' ); ?></h2>
+						<p class="section-copy"><?php alzaherah_copy_e( 'exams_text', 'اختبارات إلكترونية مستقلة بنتيجة فورية، تبدأ من حسابك بعد تأكيد الدفع.' ); ?></p>
+					</div>
+					<a class="alz3-view-all" data-alz-copy-href="exams_url" href="<?php echo esc_url( alzaherah_copy_value( 'exams_url', $exams_url ) ); ?>"><?php alzaherah_copy_e( 'exams_label', 'عرض جميع الاختبارات' ); ?> <?php echo alzaherah_ui_arrow(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></a>
+				</div>
+
+				<div class="courses-grid courses-catalog-grid alz3-home-courses-grid">
+					<?php foreach ( $alz_home_exams as $alz_home_exam_product ) : ?>
+						<?php
+						get_template_part(
+							'template-parts/sales',
+							'card',
+							array(
+								'product' => $alz_home_exam_product,
+								'heading' => 'h3',
+							)
+						);
+						?>
+					<?php endforeach; ?>
+				</div>
+			</div>
+		</section>
+	<?php endif; ?>
+
 	<?php if ( '' !== $alz_training_products_markup ) : ?>
 		<section class="alz3-course-section alz3-training-products-section section" aria-labelledby="training-products-title">
 			<div class="container">
 				<div class="section-heading alz3-section-heading">
 					<div class="text">
-						<span class="eyebrow"><?php esc_html_e( 'مواد عملية جاهزة', 'alzaherah' ); ?></span>
-						<h2 class="section-title" id="training-products-title"><?php esc_html_e( 'المنتجات التدريبية الرقمية', 'alzaherah' ); ?></h2>
-						<p class="section-copy"><?php esc_html_e( 'ملفات وقوالب تدريبية قابلة للتنزيل، مع عرض السعر الأساسي وسعر التخفيض بوضوح.', 'alzaherah' ); ?></p>
+						<span class="eyebrow"><?php alzaherah_copy_e( 'products_eyebrow', 'مواد عملية جاهزة' ); ?></span>
+						<h2 class="section-title" id="training-products-title"><?php alzaherah_copy_e( 'products_title', 'المنتجات التدريبية الرقمية' ); ?></h2>
+						<p class="section-copy"><?php alzaherah_copy_e( 'products_text', 'ملفات وقوالب جاهزة للتنزيل بعد ثبوت الدفع، مع صلاحية تنزيل محددة في حسابك.' ); ?></p>
 					</div>
-					<a class="alz3-view-all" href="<?php echo esc_url( $alz_training_products_url ); ?>"><?php esc_html_e( 'عرض جميع المنتجات', 'alzaherah' ); ?> <?php echo alzaherah_ui_arrow(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></a>
+					<a class="alz3-view-all" data-alz-copy-href="products_url" href="<?php echo esc_url( alzaherah_copy_value( 'products_url', $alz_training_products_url ) ); ?>"><?php alzaherah_copy_e( 'products_label', 'عرض جميع المنتجات' ); ?> <?php echo alzaherah_ui_arrow(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></a>
 				</div>
 
 				<div class="courses-grid courses-catalog-grid alz3-home-courses-grid alz3-home-training-products-grid">
@@ -343,15 +455,15 @@ $alz_home_content_image = static function ( $post_id ) {
 	<section class="section alz3-top-section" aria-labelledby="top-title">
 		<div class="container">
 			<?php
-			$alz_top_args = array(
-				'post_status'                 => 'publish',
-				'posts_per_page'              => 3,
-				'alz_available_courses_first' => 'priority',
-				'meta_key'                    => 'total_sales',
-				'orderby'                     => 'meta_value_num',
-				'order'                       => 'DESC',
-				'no_found_rows'               => true,
-				'meta_query'                  => array(
+			$alz_top_base = array(
+				'post_status'    => 'publish',
+				'posts_per_page' => 3,
+				'meta_key'       => 'total_sales',
+				'orderby'        => 'meta_value_num',
+				'order'          => 'DESC',
+				'no_found_rows'  => true,
+				'tax_query'      => $alz_home_catalog_tax,
+				'meta_query'     => array(
 					array(
 						'key'     => 'total_sales',
 						'value'   => 0,
@@ -360,46 +472,72 @@ $alz_home_content_image = static function ( $post_id ) {
 					),
 				),
 			);
+			if ( $alz_home_shown_course_ids ) {
+				$alz_top_base['post__not_in'] = $alz_home_shown_course_ids;
+			}
 			$alz_top = new WP_Query(
 				function_exists( 'alzaherah_course_query_args' )
-					? alzaherah_course_query_args( $alz_top_args )
-					: array_merge( array( 'post_type' => 'product' ), $alz_top_args )
+					? alzaherah_course_query_args( $alz_top_base )
+					: array_merge( array( 'post_type' => 'product' ), $alz_top_base )
 			);
-			if ( $alz_top->have_posts() ) :
-				?>
+			if ( ! $alz_top->have_posts() && $alz_home_shown_course_ids ) {
+				unset( $alz_top_base['post__not_in'] );
+				$alz_top = new WP_Query(
+					function_exists( 'alzaherah_course_query_args' )
+						? alzaherah_course_query_args( $alz_top_base )
+						: array_merge( array( 'post_type' => 'product' ), $alz_top_base )
+				);
+			}
+			?>
 				<div class="section-heading alz3-section-heading">
 					<div class="text">
-						<span class="eyebrow"><?php esc_html_e( 'اختيار المتدربين', 'alzaherah' ); ?></span>
-						<h2 class="section-title" id="top-title"><?php esc_html_e( 'الدورات الأكثر طلبًا', 'alzaherah' ); ?></h2>
+						<span class="eyebrow"><?php alzaherah_copy_e( 'popular_eyebrow', 'حسب عدد التسجيلات' ); ?></span>
+						<h2 class="section-title" id="top-title"><?php alzaherah_copy_e( 'popular_title', 'الدورات الأكثر طلبًا' ); ?></h2>
+						<p class="section-copy"><?php alzaherah_copy_e( 'popular_text', 'مرتبة وفق إجمالي التسجيلات المكتملة على المنصة، لا وفق ترتيب العرض في قسم الدورات المتاحة.' ); ?></p>
 					</div>
+					<a class="alz3-view-all" data-alz-copy-href="popular_url" href="<?php echo esc_url( alzaherah_copy_value( 'popular_url', $shop_url ) ); ?>"><?php alzaherah_copy_e( 'popular_label', 'عرض جميع الدورات' ); ?> <?php echo alzaherah_ui_arrow(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></a>
 				</div>
 
+				<?php if ( $alz_top->have_posts() ) : ?>
 				<div class="alz3-top-grid">
 					<?php
-					$alz_rank = 0;
+					$alz_top_rank = 0;
 					while ( $alz_top->have_posts() ) :
 						$alz_top->the_post();
-						$alz_rank++;
-						$alz_top_product = wc_get_product( get_the_ID() );
+						$alz_top_product = function_exists( 'wc_get_product' ) ? wc_get_product( get_the_ID() ) : null;
 						if ( ! $alz_top_product ) {
 							continue;
 						}
+						++$alz_top_rank;
+						$alz_top_thumb = $alz_top_product->get_image(
+							'woocommerce_thumbnail',
+							array(
+								'alt'      => '',
+								'loading'  => 'lazy',
+								'decoding' => 'async',
+							)
+						);
 						?>
-						<a class="alz3-top-card" href="<?php the_permalink(); ?>">
-							<span class="alz3-top-rank" aria-hidden="true"><?php echo esc_html( number_format_i18n( $alz_rank ) ); ?></span>
-							<span class="alz3-top-media">
-								<?php if ( has_post_thumbnail() ) { the_post_thumbnail( 'thumbnail', array( 'loading' => 'lazy', 'decoding' => 'async', 'alt' => sprintf( __( 'صورة دورة %s', 'alzaherah' ), get_the_title() ) ) ); } else { echo '<i aria-hidden="true">🎓</i>'; } ?>
-							</span>
+						<a class="alz3-top-card" href="<?php echo esc_url( $alz_top_product->get_permalink() ); ?>">
+							<span class="alz3-top-rank"><?php echo esc_html( (string) $alz_top_rank ); ?></span>
+							<span class="alz3-top-media"><?php echo $alz_top_thumb; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- WooCommerce image markup. ?></span>
 							<span class="alz3-top-body">
-								<strong><?php the_title(); ?></strong>
+								<strong><?php echo esc_html( $alz_top_product->get_name() ); ?></strong>
+								<small><?php esc_html_e( 'حسب التسجيلات المكتملة', 'alzaherah' ); ?></small>
 							</span>
-							<span class="alz3-top-price"><?php echo wp_kses_post( $alz_top_product->get_price_html() ); ?></span>
+							<span class="alz3-top-price"><?php echo wp_kses_post( function_exists( 'alzaherah_course_price_html' ) ? alzaherah_course_price_html( $alz_top_product ) : $alz_top_product->get_price_html() ); ?></span>
 						</a>
-					<?php endwhile; wp_reset_postdata(); ?>
+						<?php
+					endwhile;
+					wp_reset_postdata();
+					?>
 				</div>
-				<?php
-			endif;
-			?>
+				<?php else : ?>
+				<div class="alz3-empty-courses alz3-top-empty">
+					<h3><?php esc_html_e( 'ستظهر هنا الدورات الأعلى تسجيلاً', 'alzaherah' ); ?></h3>
+					<p><?php esc_html_e( 'يُحدَّث الترتيب تلقائيًا بعد اكتمال تسجيلات حقيقية، وليس وفق ترتيب العرض في قسم الدورات المتاحة.', 'alzaherah' ); ?></p>
+				</div>
+				<?php endif; ?>
 		</div>
 	</section>
 
@@ -408,16 +546,20 @@ $alz_home_content_image = static function ( $post_id ) {
 		<div class="container">
 			<div class="section-heading alz3-section-heading">
 				<div class="text">
-					<span class="eyebrow"><?php esc_html_e( 'تجارب موثوقة', 'alzaherah' ); ?></span>
-					<h2 class="section-title" id="testimonials-title"><?php esc_html_e( 'آراء متدربينا', 'alzaherah' ); ?></h2>
-					<p class="section-copy"><?php esc_html_e( 'تجارب يشاركها المتدربون وتظهر بعد مراجعتها واعتمادها من إدارة المنصة.', 'alzaherah' ); ?></p>
+					<span class="eyebrow"><?php alzaherah_copy_e( 'testimonials_eyebrow', 'تجارب موثوقة' ); ?></span>
+					<h2 class="section-title" id="testimonials-title"><?php alzaherah_copy_e( 'testimonials_title', 'آراء متدربينا' ); ?></h2>
+					<p class="section-copy"><?php alzaherah_copy_e( 'testimonials_text', 'تجارب يشاركها المتدربون وتظهر بعد مراجعتها واعتمادها من إدارة المنصة.' ); ?></p>
 				</div>
 			</div>
 
 			<?php if ( $alz_testimonials && $alz_testimonials->have_posts() ) : ?>
-				<div class="alz3-testimonial-marquee" data-testimonial-marquee>
+				<div class="alz3-testimonial-marquee" data-testimonial-marquee role="region" aria-roledescription="<?php esc_attr_e( 'عارض', 'alzaherah' ); ?>" aria-label="<?php esc_attr_e( 'آراء المتدربين', 'alzaherah' ); ?>">
+					<div class="alz3-testimonial-controls" aria-label="<?php esc_attr_e( 'التنقل بين آراء المتدربين', 'alzaherah' ); ?>">
+						<button type="button" data-marquee-direction="previous" aria-controls="alz-home-testimonial-track" aria-label="<?php esc_attr_e( 'الرأي السابق', 'alzaherah' ); ?>"><?php echo alzaherah_ui_arrow(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></button>
+						<button type="button" data-marquee-direction="next" aria-controls="alz-home-testimonial-track" aria-label="<?php esc_attr_e( 'الرأي التالي', 'alzaherah' ); ?>"><?php echo alzaherah_ui_arrow( 'back' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></button>
+					</div>
 					<div class="alz3-testimonial-marquee-viewport">
-						<div class="alz3-testimonial-marquee-track">
+						<div class="alz3-testimonial-marquee-track" id="alz-home-testimonial-track">
 							<?php while ( $alz_testimonials->have_posts() ) : $alz_testimonials->the_post(); ?>
 								<?php
 								$alz_testimonial_id     = get_the_ID();
@@ -458,22 +600,28 @@ $alz_home_content_image = static function ( $post_id ) {
 	</section>
 	<?php endif; ?>
 
-	<?php if ( $alz_news->have_posts() ) : ?>
-	<section class="section alz3-content-section alz3-home-news" aria-labelledby="home-news-title">
+	<?php if ( $alz_news->have_posts() || $alz_articles->have_posts() ) : ?>
+	<section class="section alz3-content-section alz3-home-center" aria-labelledby="home-center-title">
 		<div class="container">
 			<div class="section-heading alz3-section-heading">
 				<div class="text">
-					<span class="eyebrow"><?php esc_html_e( 'آخر مستجدات المركز', 'alzaherah' ); ?></span>
-					<h2 class="section-title" id="home-news-title"><?php esc_html_e( 'أخبارنا', 'alzaherah' ); ?></h2>
-					<p class="section-copy"><?php esc_html_e( 'تابع شراكات المركز وبرامجه ومبادراته التدريبية والمجتمعية.', 'alzaherah' ); ?></p>
+					<span class="eyebrow"><?php alzaherah_copy_e( 'news_articles_eyebrow', 'من المركز' ); ?></span>
+					<h2 class="section-title" id="home-center-title"><?php alzaherah_copy_e( 'news_articles_title', 'أخبارنا ومقالاتنا' ); ?></h2>
+					<p class="section-copy"><?php alzaherah_copy_e( 'news_articles_text', 'مستجدات المركز في الأخبار، ومعرفة مهنية قابلة للتطبيق في المقالات.' ); ?></p>
 				</div>
-				<a class="alz3-view-all" href="<?php echo esc_url( $alz_news_url ); ?>"><?php esc_html_e( 'عرض جميع الأخبار', 'alzaherah' ); ?> <?php echo alzaherah_ui_arrow(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></a>
+			</div>
+			<div class="alz3-center-columns">
+	<?php if ( $alz_news->have_posts() ) : ?>
+	<div class="alz3-home-news">
+			<div class="alz3-center-column-head">
+				<p class="alz3-center-kicker" id="home-news-title"><?php alzaherah_copy_e( 'news_title', 'أخبارنا' ); ?></p>
+				<a class="alz3-view-all" data-alz-copy-href="news_url" href="<?php echo esc_url( alzaherah_copy_value( 'news_url', $alz_news_url ) ); ?>"><?php alzaherah_copy_e( 'news_label', 'عرض جميع الأخبار' ); ?> <?php echo alzaherah_ui_arrow(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></a>
 			</div>
 
 			<div class="alz3-content-grid">
 				<?php while ( $alz_news->have_posts() ) : $alz_news->the_post(); ?>
 					<?php $alz_card_image = $alz_home_content_image( get_the_ID() ); ?>
-					<article class="alz3-content-card">
+					<article class="alz3-content-card news-card">
 						<a class="alz3-content-card-link" href="<?php the_permalink(); ?>">
 							<span class="alz3-content-media" aria-hidden="true">
 								<?php if ( 'local' === $alz_card_image['type'] ) : ?>
@@ -492,26 +640,20 @@ $alz_home_content_image = static function ( $post_id ) {
 					</article>
 				<?php endwhile; wp_reset_postdata(); ?>
 			</div>
-		</div>
-	</section>
+	</div>
 	<?php endif; ?>
 
 	<?php if ( $alz_articles->have_posts() ) : ?>
-	<section class="section alz3-content-section alz3-home-articles" aria-labelledby="home-articles-title">
-		<div class="container">
-			<div class="section-heading alz3-section-heading">
-				<div class="text">
-					<span class="eyebrow"><?php esc_html_e( 'معرفة قابلة للتطبيق', 'alzaherah' ); ?></span>
-					<h2 class="section-title" id="home-articles-title"><?php esc_html_e( 'مقالاتنا', 'alzaherah' ); ?></h2>
-					<p class="section-copy"><?php esc_html_e( 'محتوى مهني يساعدك على تطوير مهاراتك واتخاذ قرارات تعلم أوضح.', 'alzaherah' ); ?></p>
-				</div>
-				<a class="alz3-view-all" href="<?php echo esc_url( $alz_articles_url ); ?>"><?php esc_html_e( 'عرض جميع المقالات', 'alzaherah' ); ?> <?php echo alzaherah_ui_arrow(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></a>
+	<div class="alz3-home-articles">
+			<div class="alz3-center-column-head">
+				<p class="alz3-center-kicker" id="home-articles-title"><?php alzaherah_copy_e( 'articles_title', 'مقالاتنا' ); ?></p>
+				<a class="alz3-view-all" data-alz-copy-href="articles_url" href="<?php echo esc_url( alzaherah_copy_value( 'articles_url', $alz_articles_url ) ); ?>"><?php alzaherah_copy_e( 'articles_label', 'عرض جميع المقالات' ); ?> <?php echo alzaherah_ui_arrow(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></a>
 			</div>
 
 			<div class="alz3-content-grid">
 				<?php while ( $alz_articles->have_posts() ) : $alz_articles->the_post(); ?>
 					<?php $alz_card_image = $alz_home_content_image( get_the_ID() ); ?>
-					<article class="alz3-content-card">
+					<article class="alz3-content-card news-card">
 						<a class="alz3-content-card-link" href="<?php the_permalink(); ?>">
 							<span class="alz3-content-media" aria-hidden="true">
 								<?php if ( 'local' === $alz_card_image['type'] ) : ?>
@@ -530,6 +672,9 @@ $alz_home_content_image = static function ( $post_id ) {
 					</article>
 				<?php endwhile; wp_reset_postdata(); ?>
 			</div>
+	</div>
+	<?php endif; ?>
+			</div>
 		</div>
 	</section>
 	<?php endif; ?>
@@ -542,20 +687,20 @@ $alz_home_content_image = static function ( $post_id ) {
 		<div class="container">
 			<div class="alz3-section-head">
 				<div>
-					<span class="eyebrow"><?php esc_html_e( 'شراكات تصنع الأثر', 'alzaherah' ); ?></span>
-					<h2 class="section-title" id="home-partners-title"><?php esc_html_e( 'شركاء النجاح', 'alzaherah' ); ?></h2>
-					<p><?php esc_html_e( 'جهات نعتز بالتعاون معها في تطوير التدريب وخدمة المجتمع.', 'alzaherah' ); ?></p>
+					<span class="eyebrow"><?php alzaherah_copy_e( 'partners_eyebrow', 'شراكات تصنع الأثر' ); ?></span>
+					<h2 class="section-title" id="home-partners-title"><?php alzaherah_copy_e( 'partners_title', 'شركاء النجاح' ); ?></h2>
+					<p><?php alzaherah_copy_e( 'partners_text', 'جهات نعتز بالتعاون معها في تطوير التدريب وخدمة المجتمع.' ); ?></p>
 				</div>
 				<div class="alz3-home-partner-actions">
-					<a class="btn btn-secondary" href="<?php echo esc_url( home_url( '/partners/' ) ); ?>"><?php esc_html_e( 'عرض جميع الشركاء', 'alzaherah' ); ?></a>
-					<a class="btn alz3-primary-cta" href="<?php echo esc_url( home_url( '/partnership-request/' ) ); ?>"><?php esc_html_e( 'تقديم طلب شراكة', 'alzaherah' ); ?></a>
+					<a class="btn btn-secondary" data-alz-copy-href="partners_all_url" href="<?php echo esc_url( alzaherah_copy_value( 'partners_all_url', home_url( '/partners/' ) ) ); ?>"><?php alzaherah_copy_e( 'partners_all_label', 'عرض جميع الشركاء' ); ?></a>
+					<a class="btn alz3-primary-cta" data-alz-copy-href="partners_request_url" href="<?php echo esc_url( alzaherah_copy_value( 'partners_request_url', home_url( '/partnership-request/' ) ) ); ?>"><?php alzaherah_copy_e( 'partners_request_label', 'تقديم طلب شراكة' ); ?></a>
 				</div>
 			</div>
-			<div class="alz3-home-partner-carousel" data-partner-marquee>
+			<div class="alz3-home-partner-carousel" data-partner-marquee role="region" aria-roledescription="<?php esc_attr_e( 'عارض', 'alzaherah' ); ?>" aria-label="<?php esc_attr_e( 'شركاء النجاح', 'alzaherah' ); ?>">
 				<div class="alz3-home-partner-controls" aria-label="<?php esc_attr_e( 'التنقل بين الشركاء', 'alzaherah' ); ?>">
 					<?php
 					// أيقونات فيزيائية ثابتة (لا تعتمد على قلب RTL): يسار ← / يمين →
-					// previous = عكس اتجاه الحركة التلقائية، next = مع اتجاه الحركة.
+					// الأسهم فيزيائية ثابتة؛ العرض يدوي بالكامل بالسحب أو الأزرار.
 					?>
 					<button type="button" data-partner-direction="previous" aria-controls="alz-home-partner-track" aria-label="<?php esc_attr_e( 'السابق', 'alzaherah' ); ?>"><?php echo alzaherah_ui_arrow(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- forward path = chevron pointing left. ?></button>
 					<button type="button" data-partner-direction="next" aria-controls="alz-home-partner-track" aria-label="<?php esc_attr_e( 'التالي', 'alzaherah' ); ?>"><?php echo alzaherah_ui_arrow( 'back' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- back path = chevron pointing right. ?></button>
@@ -577,8 +722,18 @@ $alz_home_content_image = static function ( $post_id ) {
 
 	<section class="alz3-final-cta">
 		<div class="container alz3-final-cta-inner">
-			<div><span><?php esc_html_e( 'ابدأ اليوم', 'alzaherah' ); ?></span><h2><?php esc_html_e( 'جاهز لتطوير مهاراتك؟', 'alzaherah' ); ?></h2><p><?php esc_html_e( 'أنشئ حسابك واستعرض الدورات المتاحة واحجز مقعدك خلال دقائق.', 'alzaherah' ); ?></p></div>
-			<div class="alz3-final-actions"><a class="btn alz3-primary-cta" href="<?php echo esc_url( $shop_url ); ?>"><?php esc_html_e( 'استعرض الدورات', 'alzaherah' ); ?></a><?php if ( ! is_user_logged_in() ) : ?><a class="btn alz3-secondary-cta" href="<?php echo esc_url( $signup_url ); ?>"><?php esc_html_e( 'إنشاء حساب', 'alzaherah' ); ?></a><?php endif; ?></div>
+			<div>
+				<span><?php alzaherah_copy_e( 'final_eyebrow', 'ابدأ اليوم' ); ?></span>
+				<h2><?php alzaherah_copy_e( 'final_title', 'جاهز لتطوير مهاراتك؟' ); ?></h2>
+				<p><?php alzaherah_copy_e( 'final_text', 'اختر دورتك، أو اختبارك، أو منتجك التدريبي، ثم أكمل التسجيل من حسابك خلال دقائق.' ); ?></p>
+			</div>
+			<div class="alz3-final-actions">
+				<a class="btn alz3-primary-cta" data-alz-copy-href="final_courses_url" href="<?php echo esc_url( alzaherah_copy_value( 'final_courses_url', $shop_url ) ); ?>"><?php alzaherah_copy_e( 'final_courses_label', 'استعرض الدورات' ); ?></a>
+				<a class="btn alz3-secondary-cta" data-alz-copy-href="final_exams_url" href="<?php echo esc_url( alzaherah_copy_value( 'final_exams_url', $exams_url ) ); ?>"><?php alzaherah_copy_e( 'final_exams_label', 'استعرض الاختبارات' ); ?></a>
+				<?php if ( ! is_user_logged_in() ) : ?>
+					<a class="btn alz3-secondary-cta" data-alz-copy-href="final_signup_url" href="<?php echo esc_url( alzaherah_copy_value( 'final_signup_url', $signup_url ) ); ?>"><?php alzaherah_copy_e( 'final_signup_label', 'إنشاء حساب' ); ?></a>
+				<?php endif; ?>
+			</div>
 		</div>
 	</section>
 

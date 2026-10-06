@@ -401,9 +401,13 @@ function alzaherah_partner_public_query() {
 }
 
 function alzaherah_prepare_partners_page() {
+	if ( ! current_user_can( 'manage_options' ) && ! current_user_can( 'switch_themes' ) ) {
+		return false;
+	}
+
 	$version = '1.1';
 	if ( $version === get_option( 'alzaherah_partners_setup_version' ) ) {
-		return;
+		return false;
 	}
 
 	$pages = array(
@@ -436,11 +440,9 @@ function alzaherah_prepare_partners_page() {
 		}
 	}
 
-	flush_rewrite_rules( false );
 	update_option( 'alzaherah_partners_setup_version', $version );
-	do_action( 'litespeed_purge_all' );
+	return true;
 }
-add_action( 'admin_init', 'alzaherah_prepare_partners_page' );
 
 /**
  * Purge page caches once after a partner-section UI release.
@@ -449,15 +451,18 @@ add_action( 'admin_init', 'alzaherah_prepare_partners_page' );
  * cache can continue serving old HTML and old asset URLs after the theme update.
  */
 function alzaherah_partner_ui_upgrade() {
+	if ( ! current_user_can( 'manage_options' ) && ! current_user_can( 'switch_themes' ) ) {
+		return false;
+	}
+
 	$version = '3.10.14';
 	if ( $version === get_option( 'alzaherah_partner_ui_version' ) ) {
-		return;
+		return false;
 	}
 
 	update_option( 'alzaherah_partner_ui_version', $version );
-	do_action( 'litespeed_purge_all' );
+	return true;
 }
-add_action( 'admin_init', 'alzaherah_partner_ui_upgrade', 99 );
 
 /**
  * Attach a bundled local partner logo without any remote fetch.
@@ -498,8 +503,12 @@ function alzaherah_attach_local_partner_logo( $post_id, $title, $logo_path ) {
  * even if this function is edited later. Does not fetch or discover old-site URLs.
  */
 function alzaherah_seed_partners() {
+	if ( ! current_user_can( 'manage_options' ) && ! current_user_can( 'switch_themes' ) ) {
+		return false;
+	}
+
 	if ( '' !== (string) get_option( 'alzaherah_partner_seed_version', '' ) ) {
-		return;
+		return false;
 	}
 	$partners = array(
 		array( 'جمعية بني ظبيان الخيرية', 'KUF7OJqhEgpL06CPRDtGK7xnZvEXheju9enQ5azr.jpg' ),
@@ -522,7 +531,7 @@ function alzaherah_seed_partners() {
 
 	$use_core = class_exists( 'ALZ_Partners' ) && method_exists( 'ALZ_Partners', 'import_legacy_partner' );
 	if ( alzaherah_core_owns_partners() && ! $use_core ) {
-		return;
+		return false;
 	}
 
 	foreach ( $partners as $partner ) {
@@ -577,8 +586,69 @@ function alzaherah_seed_partners() {
 		}
 	}
 	update_option( 'alzaherah_partner_seed_version', 'final-legacy-snapshot' );
+	return true;
 }
-add_action( 'init', 'alzaherah_seed_partners', 60 );
+
+/**
+ * Run the one-time partner setup only from an intentional theme activation.
+ * Public requests never create pages, attachments, partners or rewrite rules.
+ */
+function alzaherah_activate_partner_setup() {
+	if ( ! current_user_can( 'manage_options' ) && ! current_user_can( 'switch_themes' ) ) {
+		return;
+	}
+
+	if ( ! alzaherah_core_owns_partners() ) {
+		alzaherah_register_partner_post_type();
+	}
+
+	$pages_changed = alzaherah_prepare_partners_page();
+	$seed_changed  = alzaherah_seed_partners();
+	$ui_changed    = alzaherah_partner_ui_upgrade();
+
+	if ( $pages_changed ) {
+		flush_rewrite_rules( false );
+	}
+	if ( $pages_changed || $seed_changed || $ui_changed ) {
+		do_action( 'litespeed_purge_all' );
+	}
+}
+add_action( 'after_switch_theme', 'alzaherah_activate_partner_setup', 30, 0 );
+
+/**
+ * Explicit, nonce-protected maintenance endpoint for an already-active theme.
+ * No link is emitted publicly; an authorized management UI may post to it.
+ */
+function alzaherah_run_partner_setup() {
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_die(
+			esc_html__( 'لا تملك صلاحية تهيئة صفحات الشركاء.', 'alzaherah' ),
+			esc_html__( 'وصول مرفوض', 'alzaherah' ),
+			array( 'response' => 403 )
+		);
+	}
+	check_admin_referer( 'alzaherah_partner_setup' );
+
+	if ( ! alzaherah_core_owns_partners() ) {
+		alzaherah_register_partner_post_type();
+	}
+
+	$pages_changed = alzaherah_prepare_partners_page();
+	$seed_changed  = alzaherah_seed_partners();
+	$ui_changed    = alzaherah_partner_ui_upgrade();
+
+	if ( $pages_changed ) {
+		flush_rewrite_rules( false );
+	}
+	if ( $pages_changed || $seed_changed || $ui_changed ) {
+		do_action( 'litespeed_purge_all' );
+	}
+
+	$redirect = wp_get_referer() ? wp_get_referer() : admin_url( 'themes.php' );
+	wp_safe_redirect( add_query_arg( 'alzaherah_partner_setup', 'complete', $redirect ) );
+	exit;
+}
+add_action( 'admin_post_alzaherah_run_partner_setup', 'alzaherah_run_partner_setup' );
 
 if ( ! alzaherah_core_owns_partners() ) {
 	add_action( 'init', 'alzaherah_register_partner_post_type' );
@@ -594,6 +664,53 @@ if ( ! alzaherah_core_owns_partners() ) {
  *
  * @return string
  */
+function alzaherah_primary_nav_item_is_current( $key ) {
+	switch ( $key ) {
+		case 'home':
+			return is_front_page();
+		case 'courses':
+			return function_exists( 'is_shop' ) && is_shop();
+		case 'training-products':
+			$page_id = class_exists( 'ALZ_Training_Products' ) ? absint( get_option( ALZ_Training_Products::PAGE_OPTION ) ) : 0;
+			return is_page( 'training-products' ) || ( $page_id && is_page( $page_id ) );
+		case 'exams':
+			$page_id = class_exists( 'ALZ_Exams' ) ? absint( get_option( ALZ_Exams::PAGE_OPTION ) ) : 0;
+			return is_page( 'exams' ) || ( $page_id && is_page( $page_id ) );
+		case 'policies':
+			if ( is_page( 'policy-center' ) ) {
+				return true;
+			}
+			if ( function_exists( 'alzaherah_policy_definitions' ) ) {
+				foreach ( array_keys( alzaherah_policy_definitions() ) as $slug ) {
+					if ( is_page( $slug ) ) {
+						return true;
+					}
+				}
+			}
+			return false;
+		case 'partners':
+			return is_page( 'partners' );
+		case 'about':
+			return is_page( 'about' );
+		case 'contact':
+			return is_page( 'contact' );
+	}
+	return false;
+}
+
+function alzaherah_primary_nav_item_class( $key, $url = '' ) {
+	unset( $url );
+	$classes = array( 'menu-item', 'menu-item-' . sanitize_html_class( $key ) );
+	if ( alzaherah_primary_nav_item_is_current( $key ) ) {
+		$classes[] = 'current-menu-item';
+	}
+	return implode( ' ', $classes );
+}
+
+function alzaherah_primary_nav_current_attr( $key ) {
+	return alzaherah_primary_nav_item_is_current( $key ) ? ' aria-current="page"' : '';
+}
+
 function alzaherah_policy_navigation_markup() {
 	if ( ! function_exists( 'alzaherah_policy_definitions' ) ) {
 		return '';
@@ -607,7 +724,12 @@ function alzaherah_policy_navigation_markup() {
 		$items .= '<li class="menu-item"><a href="' . esc_url( home_url( '/' . $slug . '/' ) ) . '">' . esc_html( $policy['title'] ) . '</a></li>';
 	}
 
-	return '<li class="menu-item menu-item-has-children alz-policy-menu"><a href="' . esc_url( home_url( '/policy-center/' ) ) . '">'
+	$policy_class = 'menu-item menu-item-has-children alz-policy-menu menu-item-policies';
+	if ( alzaherah_primary_nav_item_is_current( 'policies' ) ) {
+		$policy_class .= ' current-menu-item';
+	}
+
+	return '<li class="' . esc_attr( $policy_class ) . '"><a href="' . esc_url( home_url( '/policy-center/' ) ) . '"' . alzaherah_primary_nav_current_attr( 'policies' ) . '>'
 		. esc_html__( 'السياسات', 'alzaherah' )
 		. '<span class="alz-submenu-caret" aria-hidden="true">⌄</span></a><ul class="sub-menu">' . $items . '</ul></li>';
 }
@@ -638,14 +760,16 @@ function alzaherah_order_primary_navigation( $items, $args ) {
 
 	$shop_url = function_exists( 'alzaherah_shop_url' ) ? alzaherah_shop_url() : home_url( '/courses/' );
 	$training_products_url = class_exists( 'ALZ_Training_Products' ) ? ALZ_Training_Products::page_url() : home_url( '/training-products/' );
+	$exams_url = function_exists( 'alzaherah_exams_page_url' ) ? alzaherah_exams_page_url() : home_url( '/exams/' );
 
-	$ordered  = '<li class="menu-item menu-item-home"><a href="' . esc_url( home_url( '/' ) ) . '">' . esc_html__( 'الرئيسية', 'alzaherah' ) . '</a></li>';
-	$ordered .= '<li class="menu-item menu-item-courses"><a href="' . esc_url( $shop_url ) . '">' . esc_html__( 'الدورات', 'alzaherah' ) . '</a></li>';
-	$ordered .= '<li class="menu-item menu-item-training-products"><a href="' . esc_url( $training_products_url ) . '">' . esc_html__( 'المنتجات التدريبية', 'alzaherah' ) . '</a></li>';
+	$ordered  = '<li class="' . esc_attr( alzaherah_primary_nav_item_class( 'home', home_url( '/' ) ) ) . '"><a href="' . esc_url( home_url( '/' ) ) . '"' . alzaherah_primary_nav_current_attr( 'home' ) . '>' . esc_html__( 'الرئيسية', 'alzaherah' ) . '</a></li>';
+	$ordered .= '<li class="' . esc_attr( alzaherah_primary_nav_item_class( 'courses', $shop_url ) ) . '"><a href="' . esc_url( $shop_url ) . '"' . alzaherah_primary_nav_current_attr( 'courses' ) . '>' . esc_html__( 'الدورات', 'alzaherah' ) . '</a></li>';
+	$ordered .= '<li class="' . esc_attr( alzaherah_primary_nav_item_class( 'training-products', $training_products_url ) ) . '"><a href="' . esc_url( $training_products_url ) . '"' . alzaherah_primary_nav_current_attr( 'training-products' ) . '>' . esc_html__( 'المنتجات التدريبية', 'alzaherah' ) . '</a></li>';
+	$ordered .= '<li class="' . esc_attr( alzaherah_primary_nav_item_class( 'exams', $exams_url ) ) . '"><a href="' . esc_url( $exams_url ) . '"' . alzaherah_primary_nav_current_attr( 'exams' ) . '>' . esc_html__( 'الاختبارات', 'alzaherah' ) . '</a></li>';
 	$ordered .= alzaherah_policy_navigation_markup();
-	$ordered .= '<li class="menu-item menu-item-partners"><a href="' . esc_url( home_url( '/partners/' ) ) . '">' . esc_html__( 'شركاء النجاح', 'alzaherah' ) . '</a></li>';
-	$ordered .= '<li class="menu-item menu-item-about"><a href="' . esc_url( home_url( '/about/' ) ) . '">' . esc_html__( 'عن المركز', 'alzaherah' ) . '</a></li>';
-	$ordered .= '<li class="menu-item menu-item-contact"><a href="' . esc_url( home_url( '/contact/' ) ) . '">' . esc_html__( 'تواصل معنا', 'alzaherah' ) . '</a></li>';
+	$ordered .= '<li class="' . esc_attr( alzaherah_primary_nav_item_class( 'partners', home_url( '/partners/' ) ) ) . '"><a href="' . esc_url( home_url( '/partners/' ) ) . '"' . alzaherah_primary_nav_current_attr( 'partners' ) . '>' . esc_html__( 'شركاء النجاح', 'alzaherah' ) . '</a></li>';
+	$ordered .= '<li class="' . esc_attr( alzaherah_primary_nav_item_class( 'about', home_url( '/about/' ) ) ) . '"><a href="' . esc_url( home_url( '/about/' ) ) . '"' . alzaherah_primary_nav_current_attr( 'about' ) . '>' . esc_html__( 'عن المركز', 'alzaherah' ) . '</a></li>';
+	$ordered .= '<li class="' . esc_attr( alzaherah_primary_nav_item_class( 'contact', home_url( '/contact/' ) ) ) . '"><a href="' . esc_url( home_url( '/contact/' ) ) . '"' . alzaherah_primary_nav_current_attr( 'contact' ) . '>' . esc_html__( 'تواصل معنا', 'alzaherah' ) . '</a></li>';
 
 	return $ordered;
 }

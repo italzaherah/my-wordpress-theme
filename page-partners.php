@@ -8,7 +8,7 @@ defined( 'ABSPATH' ) || exit;
 get_header();
 $partners = alzaherah_partner_public_query();
 ?>
-<main id="primary" class="site-main alz-partners-page" dir="rtl">
+<main id="main" class="site-main alz-partners-page" dir="rtl">
 	<section class="alz-partners-hero">
 		<div class="container">
 			<span class="section-kicker">شراكات تصنع الأثر</span>

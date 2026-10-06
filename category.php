@@ -70,7 +70,7 @@ get_header();
 				<div class="alz3-content-grid alz3-archive-grid">
 					<?php while ( have_posts() ) : the_post(); ?>
 						<?php $alz_card_image = $alz_archive_image( get_the_ID() ); ?>
-						<article <?php post_class( 'alz3-content-card' ); ?>>
+						<article <?php post_class( 'alz3-content-card news-card' ); ?>>
 							<a class="alz3-content-card-link" href="<?php the_permalink(); ?>">
 								<span class="alz3-content-media" aria-hidden="true">
 									<?php if ( 'local' === $alz_card_image['type'] ) : ?>

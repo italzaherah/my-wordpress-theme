@@ -35,8 +35,8 @@ function alzaherah_legal_profile() {
 	$defaults = array(
 		'legal_name'       => 'مركز الزاهرة للتدريب',
 		'commercial_name'  => 'مركز الزاهرة للتدريب',
-		'commercial_reg'   => '5800102911',
-		'tvtc_license'     => '2024121182-001812',
+		'commercial_reg'   => '',
+		'tvtc_license'     => '',
 		'tax_registered'   => 'no',
 		'tax_number'       => '',
 		'national_address' => '',
@@ -48,9 +48,28 @@ function alzaherah_legal_profile() {
 		'refund_days'      => '',
 		'business_verify'  => '',
 		'license_verify'   => '',
+		'profile_approved' => 'no',
 	);
 	$saved = get_option( 'alzaherah_legal_profile', array() );
-	return wp_parse_args( is_array( $saved ) ? $saved : array(), $defaults );
+	$profile = wp_parse_args( is_array( $saved ) ? $saved : array(), $defaults );
+	$publishable = 'yes' === (string) $profile['profile_approved'];
+	foreach ( array( 'legal_name', 'commercial_name', 'commercial_reg', 'tvtc_license', 'email' ) as $required ) {
+		if ( '' === trim( (string) $profile[ $required ] ) ) {
+			$publishable = false;
+			break;
+		}
+	}
+	if ( 'yes' === (string) $profile['tax_registered'] && '' === trim( (string) $profile['tax_number'] ) ) {
+		$publishable = false;
+	}
+	$is_editor = is_admin() && ! wp_doing_ajax() && current_user_can( 'manage_options' );
+	if ( $publishable || $is_editor ) {
+		return $profile;
+	}
+
+	$redacted = array_fill_keys( array_keys( $defaults ), '' );
+	$redacted['profile_approved'] = 'no';
+	return $redacted;
 }
 
 /**
@@ -285,7 +304,12 @@ function alzaherah_policy_shortcode( $atts ) {
 	<article class="alz-policy" data-policy="<?php echo esc_attr( $key ); ?>">
 		<header class="alz-policy-hero">
 			<p class="alz-policy-kicker"><?php esc_html_e( 'سياسات مركز الزاهرة للتدريب', 'alzaherah' ); ?></p>
-			<h1><?php echo esc_html( $policy['title'] ); ?></h1>
+			<?php
+			// Managed policy pages suppress the generic page hero and own the H1.
+			// When reused inside an unrelated page, keep the shortcode heading at H2.
+			$heading_tag = function_exists( 'alzaherah_is_managed_policy_page' ) && alzaherah_is_managed_policy_page() ? 'h1' : ( is_singular( 'page' ) ? 'h2' : 'h1' );
+			?>
+			<<?php echo tag_escape( $heading_tag ); ?>><?php echo esc_html( $policy['title'] ); ?></<?php echo tag_escape( $heading_tag ); ?>>
 			<p><?php echo esc_html( $policy['summary'] ); ?></p>
 			<div class="alz-policy-meta">
 				<span><?php printf( esc_html__( 'آخر تحديث: %s', 'alzaherah' ), esc_html( $updated ) ); ?></span>
@@ -331,11 +355,34 @@ function alzaherah_policy_shortcode( $atts ) {
 add_shortcode( 'alzaherah_policy', 'alzaherah_policy_shortcode' );
 
 /**
+ * Whether the current WordPress page is one of the managed policy documents.
+ *
+ * @return bool
+ */
+function alzaherah_is_managed_policy_page() {
+	if ( ! is_page() ) {
+		return false;
+	}
+	$page = get_queried_object();
+	if ( ! $page instanceof WP_Post ) {
+		return false;
+	}
+	$policies = alzaherah_policy_definitions();
+	return isset( $policies[ sanitize_key( $page->post_name ) ] );
+}
+
+/**
  * Create missing policy pages once, without overwriting user-authored pages.
  *
  * @return void
  */
 function alzaherah_ensure_policy_pages() {
+	$can_manage = current_user_can( 'manage_options' )
+		|| ( alzaherah_core_owns_policies() && ALZ_Legal_Profile::current_user_can_manage() );
+	if ( ! $can_manage ) {
+		return;
+	}
+
 	if ( '1.2' === get_option( 'alzaherah_policy_pages_version' ) ) {
 		return;
 	}
@@ -379,7 +426,22 @@ function alzaherah_ensure_policy_pages() {
 	update_option( 'alzaherah_policy_pages_version', '1.2', false );
 }
 add_action( 'after_switch_theme', 'alzaherah_ensure_policy_pages' );
-add_action( 'admin_init', 'alzaherah_ensure_policy_pages' );
+
+/** تشغيل صريح ومحمي لإعادة إنشاء صفحات السياسات المفقودة. */
+function alzaherah_handle_ensure_policy_pages() {
+	if ( 'POST' !== strtoupper( isset( $_SERVER['REQUEST_METHOD'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_METHOD'] ) ) : '' ) ) {
+		wp_die( esc_html__( 'طريقة الطلب غير مدعومة.', 'alzaherah' ), '', array( 'response' => 405 ) );
+	}
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_die( esc_html__( 'ليست لديك صلاحية إدارة صفحات السياسات.', 'alzaherah' ), '', array( 'response' => 403 ) );
+	}
+	check_admin_referer( 'alzaherah_ensure_policy_pages' );
+	delete_option( 'alzaherah_policy_pages_version' );
+	alzaherah_ensure_policy_pages();
+	wp_safe_redirect( add_query_arg( 'alzaherah_policies_refreshed', '1', wp_get_referer() ?: admin_url( 'themes.php?page=alzaherah-legal' ) ) );
+	exit;
+}
+add_action( 'admin_post_alzaherah_ensure_policy_pages', 'alzaherah_handle_ensure_policy_pages' );
 
 /**
  * إنهاء الترحيل القديم دون حقن معرفات منشأة.
@@ -452,6 +514,7 @@ function alzaherah_sanitize_legal_profile( $input ) {
 		}
 	}
 	$clean['tax_registered'] = isset( $input['tax_registered'] ) && 'yes' === $input['tax_registered'] ? 'yes' : 'no';
+	$clean['profile_approved'] = isset( $input['profile_approved'] ) && 'yes' === $input['profile_approved'] ? 'yes' : 'no';
 	return $clean;
 }
 
@@ -520,8 +583,17 @@ function alzaherah_render_legal_settings_page() {
 					<th scope="row"><?php esc_html_e( 'مسجل في ضريبة القيمة المضافة', 'alzaherah' ); ?></th>
 					<td><label><input type="checkbox" name="alzaherah_legal_profile[tax_registered]" value="yes" <?php checked( $profile['tax_registered'], 'yes' ); ?>> <?php esc_html_e( 'نعم', 'alzaherah' ); ?></label></td>
 				</tr>
+				<tr>
+					<th scope="row"><?php esc_html_e( 'اعتماد البيانات للنشر', 'alzaherah' ); ?></th>
+					<td><label><input type="checkbox" name="alzaherah_legal_profile[profile_approved]" value="yes" <?php checked( $profile['profile_approved'], 'yes' ); ?>> <?php esc_html_e( 'راجعت البيانات والمستندات الرسمية وأعتمد نشر البيانات المكتملة للزوار.', 'alzaherah' ); ?></label></td>
+				</tr>
 			</table>
 			<?php submit_button(); ?>
+		</form>
+		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+			<input type="hidden" name="action" value="alzaherah_ensure_policy_pages">
+			<?php wp_nonce_field( 'alzaherah_ensure_policy_pages' ); ?>
+			<?php submit_button( __( 'إنشاء أو إصلاح صفحات السياسات المفقودة', 'alzaherah' ), 'secondary', 'submit', false ); ?>
 		</form>
 	</div>
 	<?php

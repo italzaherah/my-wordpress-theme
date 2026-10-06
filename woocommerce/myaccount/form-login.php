@@ -54,7 +54,7 @@ $alz_registration_enabled = 'yes' === get_option( 'woocommerce_enable_myaccount_
 		<div class="u-column2 col-2">
 			<h2><?php esc_html_e( 'إنشاء حساب', 'alzaherah' ); ?></h2>
 
-			<form method="post" class="woocommerce-form woocommerce-form-register register" autocomplete="on">
+			<form method="post" class="woocommerce-form woocommerce-form-register register" autocomplete="on" <?php do_action( 'woocommerce_register_form_tag' ); ?>>
 				<?php do_action( 'woocommerce_register_form_start' ); ?>
 
 				<?php if ( 'no' === get_option( 'woocommerce_registration_generate_username' ) ) : ?>

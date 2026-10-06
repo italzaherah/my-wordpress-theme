@@ -6,7 +6,7 @@
  * المسار داخل القالب: woocommerce/myaccount/form-edit-account.php
  *
  * @package WooCommerce\Templates
- * @version 10.5.0
+ * @version 11.0.0
  * @since   3.4.0
  */
 
@@ -26,7 +26,9 @@ do_action( 'woocommerce_before_edit_account_form' );
 			<p><?php esc_html_e( 'اسمك كما سيظهر في الشهادات والفواتير، وبيانات التواصل الأساسية.', 'alzaherah' ); ?></p>
 		</header>
 
-		<form class="woocommerce-EditAccountForm edit-account" method="post">
+		<form class="woocommerce-EditAccountForm edit-account" method="post" <?php do_action( 'woocommerce_edit_account_form_tag' ); ?>>
+
+			<?php do_action( 'woocommerce_edit_account_form_start' ); ?>
 
 			<div class="account-fields-grid">
 				<p class="woocommerce-form-row form-row">
@@ -63,6 +65,8 @@ do_action( 'woocommerce_before_edit_account_form' );
 				<button type="submit" class="woocommerce-Button button btn btn-primary" name="save_account_details" value="<?php esc_attr_e( 'حفظ البيانات', 'alzaherah' ); ?>"><?php esc_html_e( 'حفظ البيانات', 'alzaherah' ); ?></button>
 				<input type="hidden" name="action" value="save_account_details">
 			</p>
+
+			<?php do_action( 'woocommerce_edit_account_form_end' ); ?>
 
 		</form>
 

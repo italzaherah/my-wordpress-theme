@@ -48,7 +48,7 @@ get_header();
 					<span class="eyebrow"><?php esc_html_e( 'تعرّف علينا', 'alzaherah' ); ?></span>
 					<h1 class="section-title"><?php esc_html_e( 'شريكك في رحلة التطوير المهني', 'alzaherah' ); ?></h1>
 					<p class="section-copy">
-						<?php esc_html_e( 'منصة تدريب سعودية تجمع بين خبرة المدربين المعتمدين وتجربة تسجيل رقمية متكاملة، لنجعل التعلّم أقرب وأسهل للأفراد والمنشآت.', 'alzaherah' ); ?>
+						<?php esc_html_e( 'منصة تدريب تجمع بين خبرة المتخصصين وتجربة تسجيل رقمية متكاملة، لنجعل التعلّم أقرب وأسهل للأفراد والمنشآت.', 'alzaherah' ); ?>
 					</p>
 				</div>
 			</div>
@@ -113,7 +113,7 @@ get_header();
 				<div class="category-card">
 					<div class="category-icon" aria-hidden="true">◎</div>
 					<h3><?php esc_html_e( 'جودة المحتوى', 'alzaherah' ); ?></h3>
-					<p><?php esc_html_e( 'برامج مبنية على احتياج فعلي، يقدمها مدربون معتمدون بخبرة ميدانية.', 'alzaherah' ); ?></p>
+					<p><?php esc_html_e( 'برامج مبنية على احتياج فعلي، يقدمها متخصصون ذوو خبرة ميدانية؛ ويظهر أي اعتماد خاص بالبرنامج في صفحته.', 'alzaherah' ); ?></p>
 				</div>
 
 				<div class="category-card">

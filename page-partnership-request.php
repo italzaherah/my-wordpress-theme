@@ -10,7 +10,7 @@ defined( 'ABSPATH' ) || exit;
 
 get_header();
 ?>
-<main id="primary" class="site-main alz-partners-page alz-partnership-request-page" dir="rtl">
+<main id="main" class="site-main alz-partners-page alz-partnership-request-page" dir="rtl">
 	<section class="alz-partnership-request-hero">
 		<div class="container">
 			<a class="alz-request-back" href="<?php echo esc_url( home_url( '/partners/' ) ); ?>">العودة إلى شركاء النجاح</a>

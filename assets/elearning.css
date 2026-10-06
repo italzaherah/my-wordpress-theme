@@ -1,0 +1,87 @@
+/**
+ * Al-Zaherah e-learning skin — v4 identity over the internal learning engine.
+ *
+ * يعمل على أسطح التعلم فقط (دورة/درس/اختبار قصير داخل الدورة) ويحوّل
+ * متغيرات المحرك الداخلي إلى توكنات هوية الزاهرة v4 دون تعديل ملفاته.
+ *
+ * @package Alzaherah
+ * @since   4.10.0
+ */
+
+:root,
+.tutor-wrap,
+[class*="tutor-"] {
+  /* الألوان الأساسية */
+  --tutor-color-primary: var(--alz-action-primary);
+  --tutor-color-primary-hover: var(--alz-purple-700);
+  --tutor-color-primary-rgb: 109, 40, 217;
+  --tutor-color-secondary: var(--alz-navy-900);
+  --tutor-brand-450: var(--alz-purple-600);
+  --tutor-text-brand: var(--alz-purple-700);
+  --tutor-border-brand: var(--alz-purple-600);
+  --tutor-border-brand-tertiary: var(--alz-purple-200, #ddd6fe);
+
+  /* النصوص */
+  --tutor-body-color: var(--alz-text-body);
+  --tutor-text-primary: var(--alz-navy-900);
+  --tutor-text-secondary: var(--alz-text-body);
+  --tutor-text-subdued: var(--alz-muted);
+  --tutor-color-muted: var(--alz-muted);
+
+  /* الأسطح والحدود */
+  --tutor-surface-base: var(--alz-surface);
+  --tutor-surface-l1: #fff;
+  --tutor-surface-l1-hover: var(--alz-surface-subtle);
+  --tutor-border-idle: var(--alz-line);
+  --tutor-border-idle2: var(--alz-line);
+  --tutor-border-color: var(--alz-line);
+
+  /* الخط */
+  --tutor-font-family-body: var(--alz-font-body);
+}
+
+/* خط وهوية عامة داخل أسطح المحرك */
+.tutor-wrap,
+.tutor-wrap button,
+.tutor-wrap input,
+.tutor-wrap select,
+.tutor-wrap textarea {
+  font-family: var(--alz-font-body) !important;
+}
+
+/* أزرار المحرك على قواعد أزرار الهوية: ارتفاع لمس وزوايا 12px */
+.tutor-wrap .tutor-btn,
+.tutor-wrap button[class*="tutor-btn"] {
+  min-height: 44px;
+  border-radius: 12px;
+  font-weight: 600;
+}
+
+.tutor-wrap .tutor-btn-primary {
+  background: var(--alz-action-primary);
+  border-color: var(--alz-action-primary);
+  color: #fff;
+}
+
+.tutor-wrap .tutor-btn-primary:hover {
+  background: var(--alz-purple-700);
+  border-color: var(--alz-purple-700);
+}
+
+.tutor-wrap .tutor-btn:focus-visible {
+  outline: 3px solid var(--alz-focus);
+  outline-offset: 2px;
+}
+
+/* البطاقات والحاويات: زوايا الهوية وظل هادئ */
+.tutor-wrap .tutor-card {
+  border: 1px solid var(--alz-line);
+  border-radius: 14px;
+  box-shadow: none;
+}
+
+/* أشرطة تقدم المحرك بلون الهوية */
+.tutor-wrap .tutor-progress-bar .tutor-progress-value,
+.tutor-wrap [class*="progress"] [class*="value"] {
+  background: var(--alz-action-primary);
+}
