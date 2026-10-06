@@ -77,6 +77,9 @@ if ( $manifest && $theme_version ) {
 	} else {
 		printf( "ok  theme %s satisfies min_compatible_theme %s\n", $theme_version, $min );
 	}
+	if ( preg_match( '/\$min_core\s*=\s*\'([^\']+)\'/', (string) file_get_contents( $theme_dir . 'functions.php' ), $m ) ) {
+		alz_ci_expect( $errors, 'theme plugin-compatibility notice minimum', $m[1], $manifest['min_compatible_core'] ?? '' );
+	}
 	if ( ( $manifest['theme_version'] ?? '' ) !== $theme_version ) {
 		printf( "::warning::paired theme is %s but the plugin manifest was generated for %s\n", $theme_version, $manifest['theme_version'] ?? '?' );
 	}

@@ -52,12 +52,16 @@ function alzaherah_core_compatibility_notice() {
 	if ( ! current_user_can( 'manage_options' ) ) {
 		return;
 	}
+	// Keep in step with min_compatible_core in the plugin's alz-release-manifest.json.
+	$min_core = '3.6.0';
 	if ( ! defined( 'ALZ_CORE_VERSION' ) ) {
-		echo '<div class="notice notice-warning"><p>' . esc_html__( 'ثيم الزاهرة 4.12.5 يحتاج إلى إضافة Alzaherah Platform Core 3.4.9 لتشغيل تجربة الاختبارات وعقد الهوية v4.1.3 بأمان.', 'alzaherah' ) . '</p></div>';
+		/* translators: 1: theme version, 2: minimum plugin version. */
+		echo '<div class="notice notice-warning"><p>' . esc_html( sprintf( __( 'ثيم الزاهرة %1$s يحتاج إلى إضافة Alzaherah Platform Core %2$s لتشغيل تجربة الاختبارات وعقد الهوية v4.1.3 بأمان.', 'alzaherah' ), ALZAHERAH_THEME_VERSION, $min_core ) ) . '</p></div>';
 		return;
 	}
-	if ( version_compare( ALZ_CORE_VERSION, '3.4.9', '<' ) ) {
-		echo '<div class="notice notice-error"><p>' . esc_html__( 'نسخة Alzaherah Platform Core الحالية غير متوافقة مع الثيم. حدّثها إلى 3.4.9 قبل استقبال محاولات اختبار جديدة.', 'alzaherah' ) . '</p></div>';
+	if ( version_compare( ALZ_CORE_VERSION, $min_core, '<' ) ) {
+		/* translators: %s: minimum plugin version. */
+		echo '<div class="notice notice-error"><p>' . esc_html( sprintf( __( 'نسخة Alzaherah Platform Core الحالية غير متوافقة مع الثيم. حدّثها إلى %s قبل استقبال محاولات اختبار جديدة.', 'alzaherah' ), $min_core ) ) . '</p></div>';
 	}
 }
 add_action( 'admin_notices', 'alzaherah_core_compatibility_notice' );

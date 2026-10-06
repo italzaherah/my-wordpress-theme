@@ -354,7 +354,7 @@ function alzaherah_account_orders_columns( $columns ) {
 	}
 	return $columns;
 }
-add_filter( 'woocommerce_my_account_my_orders_columns', 'alzaherah_account_orders_columns', 20 );
+add_filter( 'woocommerce_account_orders_columns', 'alzaherah_account_orders_columns', 20 );
 
 /** Arabic labels for purchased digital files. */
 function alzaherah_account_downloads_columns( $columns ) {

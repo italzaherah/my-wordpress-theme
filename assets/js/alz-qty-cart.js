@@ -234,7 +234,8 @@
 		document.querySelectorAll('[data-alz-cart-row]').forEach(function (row) {
 			var key = row.getAttribute('data-cart-key');
 			var input = row.querySelector('[data-alz-qty-input]');
-			if (!key || !input) return;
+			if (!key || !input || row.getAttribute('data-alz-cart-bound') === '1') return;
+			row.setAttribute('data-alz-cart-bound', '1');
 			row.setAttribute('data-alz-last-qty', String(input.value));
 			input.addEventListener('alz-qty-change', function () {
 				var qty = parseQty(input.value);
@@ -251,4 +252,13 @@
 		bootSteppers(document);
 		bindCartQty();
 	});
+
+	// WooCommerce's classic cart replaces the cart form over AJAX and announces it with jQuery
+	// events (not native DOM events); bind the new steppers when that happens.
+	if (window.jQuery) {
+		window.jQuery(document.body).on('updated_wc_div updated_cart_totals', function () {
+			bootSteppers(document);
+			bindCartQty();
+		});
+	}
 })();
