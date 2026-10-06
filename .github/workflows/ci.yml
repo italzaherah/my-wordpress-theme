@@ -256,6 +256,13 @@ jobs:
           wp theme activate "$default_theme" --path="$WP_DIR" --allow-root
           BASE_URL="$BASE_URL" DEBUG_LOG=/tmp/wp-debug.log WP="wp --path=$WP_DIR --allow-root" OUT_DIR=/tmp/smoke-default \
             bash self/.github/scripts/smoke-test.sh
+      - name: Show server and PHP error logs on failure
+        if: failure()
+        run: |
+          echo "---- php-server.log (last 80 lines)"
+          tail -n 80 /tmp/php-server.log 2>/dev/null || true
+          echo "---- wp-debug.log (fatal errors and timeouts)"
+          grep -E 'PHP (Fatal|Parse) error|Uncaught|Maximum execution time' /tmp/wp-debug.log 2>/dev/null | tail -n 40 || true
       - name: Upload responses and logs on failure
         if: failure()
         uses: actions/upload-artifact@v4
