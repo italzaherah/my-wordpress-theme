@@ -244,6 +244,9 @@ jobs:
           php --version
       - name: Run smoke test
         run: |
+          # Keep a core file if the built-in server crashes; the failure step prints its backtrace.
+          ulimit -c unlimited
+          sudo sysctl -q -w kernel.core_pattern=/tmp/core.%e.%p || true
           php -S 127.0.0.1:8080 -t "$WP_DIR" "$GITHUB_WORKSPACE/self/.github/scripts/router.php" > /tmp/php-server.log 2>&1 &
           sleep 2
           BASE_URL="$BASE_URL" DEBUG_LOG=/tmp/wp-debug.log WP="wp --path=$WP_DIR --allow-root" OUT_DIR=/tmp/smoke \
@@ -263,6 +266,23 @@ jobs:
           tail -n 80 /tmp/php-server.log 2>/dev/null || true
           echo "---- wp-debug.log (fatal errors and timeouts)"
           grep -E 'PHP (Fatal|Parse) error|Uncaught|Maximum execution time' /tmp/wp-debug.log 2>/dev/null | tail -n 40 || true
+          shopt -s nullglob
+          cores=(/tmp/core.*)
+          if [ ${#cores[@]} -gt 0 ]; then
+            php_bin=$(readlink -f "$(command -v php)")
+            php_ver=$(php -r 'echo PHP_VERSION;')
+            echo "---- ${cores[0]} from $php_bin ($php_ver, package: $(dpkg -S "$php_bin" 2>/dev/null | cut -d: -f1))"
+            php -r 'echo "opcache.enable=", ini_get("opcache.enable"), " opcache.jit=", ini_get("opcache.jit"), PHP_EOL;'
+            # Best effort: debug symbols from the PPA's debug archive let .gdbinit print the PHP-level stack.
+            echo "deb http://ppa.launchpadcontent.net/ondrej/php/ubuntu $(lsb_release -cs) main/debug" | sudo tee /etc/apt/sources.list.d/php-debug.list >/dev/null
+            sudo apt-get update -qq >/dev/null 2>&1 || true
+            sudo apt-get install -y -qq gdb >/dev/null 2>&1 || true
+            sudo apt-get install -y -qq "php${php_ver%.*}-cli-dbgsym" >/dev/null 2>&1 || echo "(no debug symbols for php${php_ver%.*}-cli)"
+            curl -fsSL -o /tmp/php.gdbinit "https://raw.githubusercontent.com/php/php-src/php-$php_ver/.gdbinit" || true
+            gdb_args=(-batch -ex 'echo \n---- native stack\n' -ex 'bt 50')
+            if [ -s /tmp/php.gdbinit ]; then gdb_args+=(-x /tmp/php.gdbinit -ex 'echo \n---- PHP stack\n' -ex zbacktrace); fi
+            gdb "${gdb_args[@]}" "$php_bin" "${cores[0]}" 2>&1 | grep -vE '^\[(New LWP|Thread debugging)' | tail -n 120 || true
+          fi
       - name: Upload responses and logs on failure
         if: failure()
         uses: actions/upload-artifact@v4
