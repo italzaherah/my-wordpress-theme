@@ -7,7 +7,7 @@
  * دون المرور بقالب الصفحات العامة الضيق الذي يكرر العنوان.
  *
  * @package Alzaherah
- * @since   4.8.4
+ * @since   4.8.5
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -26,7 +26,7 @@ get_header();
 			<div class="courses-hero-badges" aria-label="<?php esc_attr_e( 'مزايا المنتجات الرقمية', 'alzaherah' ); ?>">
 				<span>✓ <?php esc_html_e( 'تنزيل محمي', 'alzaherah' ); ?></span>
 				<span>✓ <?php esc_html_e( 'صلاحية 90 يومًا', 'alzaherah' ); ?></span>
-				<span>✓ <?php esc_html_e( 'فاتورة إلكترونية', 'alzaherah' ); ?></span>
+				<span>✓ <?php esc_html_e( 'تأكيد الطلب عبر البريد الإلكتروني', 'alzaherah' ); ?></span>
 			</div>
 		</div>
 	</section>

@@ -1,0 +1,272 @@
+/*
+ * Alzaherah v4.1.3 shared component compatibility layer.
+ *
+ * Load order: identity tokens -> Theme base/theme-v4/commerce surfaces ->
+ * this file. The selectors are intentionally scoped to Theme surfaces and
+ * exclude the focused exam player so CBT states keep their dedicated rules.
+ * Platform dashboard rules are mirrored below for the Plugin package.
+ */
+
+/* -------------------------------------------------------------------------
+   Theme component contract
+--------------------------------------------------------------------------- */
+:where(
+  .alz-ui:not(.alz-exam-player):not(:has(.alz-exam-player)):not(.alz-admin-wrap),
+  .woocommerce:not(:has(.alz-exam-player)),
+  .tutor-wrap:not(:has(.alz-exam-player))
+) :where(.btn, a.button, button.button, input.button) {
+  min-height: var(--alz-component-control-height);
+  border-radius: var(--alz-component-radius-control);
+  font-family: var(--alz-font-body);
+  transition:
+    color var(--alz-duration-fast) var(--alz-ease-standard),
+    background-color var(--alz-duration-fast) var(--alz-ease-standard),
+    border-color var(--alz-duration-fast) var(--alz-ease-standard),
+    box-shadow var(--alz-duration-fast) var(--alz-ease-standard);
+}
+
+:where(
+  .alz-ui:not(.alz-exam-player):not(:has(.alz-exam-player)):not(.alz-admin-wrap),
+  .woocommerce:not(:has(.alz-exam-player)),
+  .tutor-wrap:not(:has(.alz-exam-player))
+) :where(.btn-primary, .button.alt) {
+  background: var(--alz-component-action);
+  border-color: var(--alz-component-action);
+  color: var(--alz-on-primary);
+  box-shadow: var(--alz-shadow-none);
+}
+
+:where(
+  .alz-ui:not(.alz-exam-player):not(:has(.alz-exam-player)):not(.alz-admin-wrap),
+  .woocommerce:not(:has(.alz-exam-player)),
+  .tutor-wrap:not(:has(.alz-exam-player))
+) :where(.btn-primary, .button.alt):hover {
+  background: var(--alz-component-action-hover);
+  border-color: var(--alz-component-action-hover);
+  color: var(--alz-on-primary);
+  box-shadow: var(--alz-component-shadow-card);
+}
+
+:where(
+  .alz-ui:not(.alz-exam-player):not(:has(.alz-exam-player)):not(.alz-admin-wrap),
+  .woocommerce:not(:has(.alz-exam-player)),
+  .tutor-wrap:not(:has(.alz-exam-player))
+) :where(
+  input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="reset"]):not([type="file"]),
+  select,
+  textarea,
+  .input-text
+) {
+  min-height: var(--alz-control-height-input);
+  border: var(--alz-border-width) solid var(--alz-component-border);
+  border-radius: var(--alz-component-radius-control);
+  background: var(--alz-component-surface);
+  color: var(--alz-component-text-body);
+  font-family: var(--alz-font-body);
+  box-shadow: var(--alz-shadow-none);
+}
+
+:where(
+  .alz-ui:not(.alz-exam-player):not(:has(.alz-exam-player)):not(.alz-admin-wrap),
+  .woocommerce:not(:has(.alz-exam-player)),
+  .tutor-wrap:not(:has(.alz-exam-player))
+) :where(
+  input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="reset"]):not([type="file"]),
+  select,
+  textarea,
+  .input-text
+):focus-visible {
+  border-color: var(--alz-component-action);
+  outline: 3px solid var(--alz-component-focus);
+  outline-offset: 2px;
+  box-shadow: var(--alz-shadow-none);
+}
+
+:where(
+  .alz-ui:not(.alz-exam-player):not(:has(.alz-exam-player)):not(.alz-admin-wrap),
+  .woocommerce:not(:has(.alz-exam-player)),
+  .tutor-wrap:not(:has(.alz-exam-player))
+) :where(.alz-alert--success, .woocommerce-message) {
+  border: var(--alz-border-width) solid var(--alz-component-success);
+  border-radius: var(--alz-component-radius-control);
+  background: var(--alz-component-success-surface);
+  color: var(--alz-component-success);
+}
+
+:where(
+  .alz-ui:not(.alz-exam-player):not(:has(.alz-exam-player)):not(.alz-admin-wrap),
+  .woocommerce:not(:has(.alz-exam-player)),
+  .tutor-wrap:not(:has(.alz-exam-player))
+) :where(.alz-alert--warning) {
+  border: var(--alz-border-width) solid var(--alz-component-warning);
+  border-radius: var(--alz-component-radius-control);
+  background: var(--alz-component-warning-surface);
+  color: var(--alz-component-warning);
+}
+
+:where(
+  .alz-ui:not(.alz-exam-player):not(:has(.alz-exam-player)):not(.alz-admin-wrap),
+  .woocommerce:not(:has(.alz-exam-player)),
+  .tutor-wrap:not(:has(.alz-exam-player))
+) :where(.alz-alert--error, .woocommerce-error) {
+  border: var(--alz-border-width) solid var(--alz-component-danger);
+  border-radius: var(--alz-component-radius-control);
+  background: var(--alz-component-danger-surface);
+  color: var(--alz-component-danger);
+}
+
+:where(
+  .alz-ui:not(.alz-exam-player):not(:has(.alz-exam-player)):not(.alz-admin-wrap),
+  .woocommerce:not(:has(.alz-exam-player)),
+  .tutor-wrap:not(:has(.alz-exam-player))
+) :where(.alz-alert--info, .woocommerce-info) {
+  border: var(--alz-border-width) solid var(--alz-component-info);
+  border-radius: var(--alz-component-radius-control);
+  background: var(--alz-component-info-surface);
+  color: var(--alz-component-info);
+}
+
+:where(
+  .alz-ui:not(.alz-exam-player):not(:has(.alz-exam-player)):not(.alz-admin-wrap),
+  .woocommerce:not(:has(.alz-exam-player)),
+  .tutor-wrap:not(:has(.alz-exam-player))
+) :where(.btn, a.button, button.button, input.button, a, button, input, select, textarea, summary):focus-visible {
+  outline: 3px solid var(--alz-component-focus);
+  outline-offset: 3px;
+}
+
+/* -------------------------------------------------------------------------
+   Platform dashboard component contract
+--------------------------------------------------------------------------- */
+.alz-fd-shell {
+  background: var(--alz-component-page);
+  color: var(--alz-component-text-body);
+}
+
+.alz-fd-shell .alz-fd-btn {
+  min-height: var(--alz-control-height-md);
+  border-radius: var(--alz-component-radius-control);
+  box-shadow: var(--alz-shadow-none);
+}
+
+.alz-fd-shell .alz-fd-btn:hover {
+  box-shadow: var(--alz-component-shadow-card);
+}
+
+.alz-fd-shell :where(.alz-fd-btn-primary, .alz-fd-btn-danger) {
+  box-shadow: var(--alz-shadow-none);
+}
+
+.alz-fd-shell :where(.alz-fd-btn-primary, .alz-fd-btn-danger):hover {
+  box-shadow: var(--alz-component-shadow-card);
+}
+
+.alz-fd-shell .alz-fd-btn-light {
+  border-color: var(--alz-component-border);
+  background: var(--alz-component-surface-subtle);
+  color: var(--alz-component-text-primary);
+}
+
+.alz-fd-shell .alz-fd-notice {
+  border-radius: var(--alz-component-radius-control);
+}
+
+.alz-fd-shell .alz-fd-panel {
+  border-color: var(--alz-component-border);
+  border-radius: var(--alz-console-panel-radius);
+  background: var(--alz-component-surface);
+  box-shadow: var(--alz-shadow-none);
+}
+
+/* KPI elevation and radius are explicit v4 console exceptions. */
+.alz-fd-shell .alz-fd-kpi {
+  border-color: var(--alz-component-border);
+  border-radius: var(--alz-console-kpi-radius);
+  background: var(--alz-component-surface-elevated);
+  box-shadow: var(--alz-component-shadow-elevated);
+}
+
+.alz-fd-shell .alz-fd-table th {
+  background: var(--alz-info-surface);
+  border-color: var(--alz-component-border);
+}
+
+.alz-fd-shell .alz-fd-table td {
+  border-color: var(--alz-component-surface-tint);
+  color: var(--alz-component-text-body);
+}
+
+.alz-fd-shell .alz-fd-form :where(input, select, textarea) {
+  min-height: var(--alz-control-height-input);
+  border-color: var(--alz-component-border);
+  border-radius: var(--alz-component-radius-control);
+  background: var(--alz-component-surface);
+  color: var(--alz-component-text-body);
+  box-shadow: var(--alz-shadow-none);
+}
+
+.alz-fd-shell .alz-fd-form :where(input, select, textarea):focus-visible {
+  border-color: var(--alz-component-action);
+  outline: 3px solid var(--alz-component-focus);
+  outline-offset: 2px;
+  box-shadow: var(--alz-shadow-none);
+}
+
+.alz-fd-shell :where(.alz-fd-empty, .alz-fd-form-section, .alz-assess-product-picker, .alz-assess-product-create) {
+  border-color: var(--alz-component-border);
+  border-radius: var(--alz-component-radius-card);
+  background: var(--alz-component-surface-subtle);
+  box-shadow: var(--alz-shadow-none);
+}
+
+.alz-fd-shell :where(.alz-assess-selection-section, .alz-assess-preview-question) {
+  border-color: var(--alz-component-border);
+  border-radius: var(--alz-component-radius-card);
+  background: var(--alz-component-surface);
+  box-shadow: var(--alz-shadow-none);
+}
+
+.alz-fd-shell :where(.alz-assess-selection-mode, .alz-assess-candidate, .alz-assess-preview-option) {
+  border-color: var(--alz-component-border);
+  border-radius: var(--alz-component-radius-control);
+  background: var(--alz-component-surface);
+}
+
+.alz-fd-shell :where(.alz-assess-selection-mode:has(input:checked), .alz-assess-candidate:has(input:checked), .alz-assess-preview-option:has(input:checked)) {
+  border-color: var(--alz-component-action);
+  background: var(--alz-purple-soft);
+}
+
+.alz-fd-shell :where(.alz-fd-btn, .alz-fd-form input, .alz-fd-form select, .alz-fd-form textarea, .alz-assess-selection-mode, .alz-assess-candidate, .alz-assess-preview-option):focus-visible {
+  outline: 3px solid var(--alz-component-focus);
+  outline-offset: 3px;
+}
+
+@media (max-width: 760px) {
+  .alz-fd-shell .alz-fd-table {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    table-layout: fixed;
+  }
+
+  .alz-fd-shell .alz-fd-panel {
+    box-shadow: var(--alz-shadow-none);
+  }
+}
+
+/* Accent is teal with navy text; it is not the primary purple action. */
+:where(.alz-ui:not(:has(.alz-exam-player)), .woocommerce:not(:has(.alz-exam-player))) .btn-accent {
+  background: var(--alz-action-accent);
+  color: var(--alz-text-primary);
+  border-color: var(--alz-action-accent);
+}
+:where(.alz-ui:not(:has(.alz-exam-player)), .woocommerce:not(:has(.alz-exam-player))) .btn-accent:hover {
+  background: var(--alz-teal-300);
+  color: var(--alz-text-primary);
+}
+.alz-fd-shell :is(.alz-fd-btn, button):disabled {
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}

@@ -15,7 +15,10 @@ $shop_url    = function_exists( 'alzaherah_shop_url' ) ? alzaherah_shop_url() : 
 $cart_url    = function_exists( 'wc_get_cart_url' ) ? wc_get_cart_url() : home_url( '/cart/' );
 $can_dashboard = function_exists( 'alz_user_can_access_front_dashboard' ) && alz_user_can_access_front_dashboard();
 $dashboard_url = function_exists( 'alz_front_dashboard_url' ) ? alz_front_dashboard_url() : home_url( '/platform-dashboard/' );
+$alz_exam_focus = function_exists( 'alzaherah_is_active_exam_attempt' ) && alzaherah_is_active_exam_attempt();
 $brand_name   = __( 'مركز الزاهرة للتدريب', 'alzaherah' );
+$brand_href   = $alz_exam_focus ? '#main' : home_url( '/' );
+$brand_label  = $alz_exam_focus ? __( 'العودة إلى الاختبار', 'alzaherah' ) : $brand_name;
 $brand_logo_url = add_query_arg(
 	'ver',
 	wp_get_theme()->get( 'Version' ),
@@ -34,13 +37,13 @@ $brand_logo_url = add_query_arg(
 
 <a class="skip-link" href="#main"><?php esc_html_e( 'تجاوز إلى المحتوى', 'alzaherah' ); ?></a>
 
-<header class="site-header alz-header">
+<header class="site-header alz-header<?php echo $alz_exam_focus ? ' alz-header--exam-focus' : ''; ?>">
 	<div class="container alz-navbar">
 
 		<div class="brand alz-brand">
-			<a class="brand-link" href="<?php echo esc_url( home_url( '/' ) ); ?>" aria-label="<?php echo esc_attr( $brand_name ); ?>">
+			<a class="brand-link alz-brand-lockup" href="<?php echo esc_url( $brand_href ); ?>" aria-label="<?php echo esc_attr( $brand_label ); ?>">
 				<img
-					class="brand-mark"
+					class="brand-mark alz-brand-mark"
 					src="<?php echo esc_url( $brand_logo_url ); ?>"
 					alt=""
 					width="56"
@@ -48,13 +51,14 @@ $brand_logo_url = add_query_arg(
 					fetchpriority="high"
 					decoding="async"
 				>
-				<span class="brand-text">
-					<strong><?php echo esc_html( $brand_name ); ?></strong>
-					<small><?php esc_html_e( 'ALZAHERAH TRAINING CENTER', 'alzaherah' ); ?></small>
+				<span class="brand-text alz-brand-lockup__text">
+					<strong class="alz-brand-lockup__ar"><?php echo esc_html( $brand_name ); ?></strong>
+					<small class="alz-brand-lockup__en"><?php esc_html_e( 'ALZAHERAH TRAINING CENTER', 'alzaherah' ); ?></small>
 				</span>
 			</a>
 		</div>
 
+		<?php if ( ! $alz_exam_focus ) : ?>
 		<nav class="alz-main-navigation" aria-label="<?php esc_attr_e( 'القائمة الرئيسية', 'alzaherah' ); ?>">
 			<?php
 			wp_nav_menu(
@@ -94,7 +98,7 @@ $brand_logo_url = add_query_arg(
 				</a>
 			<?php endif; ?>
 
-			<a class="alz-cart-link" href="<?php echo esc_url( $cart_url ); ?>" aria-label="<?php esc_attr_e( 'سلة التسجيل', 'alzaherah' ); ?>">
+			<a class="alz-cart-link" href="<?php echo esc_url( $cart_url ); ?>" aria-label="<?php esc_attr_e( 'سلة المشتريات', 'alzaherah' ); ?>">
 				<span class="alz-cart-icon" aria-hidden="true">
 					<svg viewBox="0 0 24 24" focusable="false"><path d="M3 4h2.2l1.6 9.1a2 2 0 0 0 2 1.65h7.9a2 2 0 0 0 1.95-1.58L20 7H6"/><circle cx="9" cy="19" r="1.5"/><circle cx="17" cy="19" r="1.5"/></svg>
 				</span>
@@ -105,16 +109,48 @@ $brand_logo_url = add_query_arg(
 				<span class="alz-menu-icon" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M4 7h16M4 12h16M4 17h16"/></svg></span>
 			</button>
 		</div>
+		<?php else : ?>
+			<div class="alz-exam-focus-context" aria-label="<?php esc_attr_e( 'بيانات الاختبار النشط', 'alzaherah' ); ?>">
+				<span class="alz-exam-focus-kicker"><?php esc_html_e( 'اختبار نشط', 'alzaherah' ); ?></span>
+				<strong class="alz-exam-focus-title" data-alz-exam-site-title aria-live="polite" aria-atomic="true">
+					<?php esc_html_e( 'جاري تحميل بيانات الاختبار', 'alzaherah' ); ?>
+				</strong>
+			</div>
+
+			<div class="alz-exam-focus-actions">
+				<div class="alz-exam-focus-states" role="status" aria-live="polite" aria-atomic="false">
+					<span class="alz-exam-focus-state alz-exam-focus-connection" data-alz-exam-site-connection data-state="checking">
+						<span class="alz-exam-focus-state__indicator" aria-hidden="true"></span>
+						<span data-alz-exam-site-connection-label><?php esc_html_e( 'التحقق من الاتصال', 'alzaherah' ); ?></span>
+					</span>
+					<span id="alz-exam-focus-save-state" class="alz-exam-focus-state alz-exam-focus-save-state" data-alz-exam-site-save-state data-state="idle">
+						<?php esc_html_e( 'جاهز للحفظ', 'alzaherah' ); ?>
+					</span>
+				</div>
+
+				<button
+					type="button"
+					class="button alz-exam-focus-save-exit"
+					data-alz-exam-site-save-exit
+					aria-describedby="alz-exam-focus-save-state"
+					aria-disabled="true"
+					disabled
+				>
+					<?php esc_html_e( 'حفظ وخروج', 'alzaherah' ); ?>
+				</button>
+			</div>
+		<?php endif; ?>
 	</div>
 </header>
 
+<?php if ( ! $alz_exam_focus ) : ?>
 <div id="mobile-drawer" class="mobile-drawer" aria-hidden="true">
 	<div class="drawer-backdrop"></div>
-	<aside class="drawer-panel" role="dialog" aria-modal="true" aria-label="<?php esc_attr_e( 'قائمة التنقل', 'alzaherah' ); ?>">
+	<aside class="drawer-panel" role="dialog" aria-modal="true" aria-label="<?php esc_attr_e( 'قائمة التنقل', 'alzaherah' ); ?>" tabindex="-1">
 		<div class="drawer-header">
-			<a class="brand-link" href="<?php echo esc_url( home_url( '/' ) ); ?>" aria-label="<?php echo esc_attr( $brand_name ); ?>">
-				<img class="brand-mark" src="<?php echo esc_url( $brand_logo_url ); ?>" alt="" width="44" height="45" decoding="async">
-				<span class="brand-text"><strong><?php echo esc_html( $brand_name ); ?></strong></span>
+			<a class="brand-link alz-brand-lockup" href="<?php echo esc_url( home_url( '/' ) ); ?>" aria-label="<?php echo esc_attr( $brand_name ); ?>">
+				<img class="brand-mark alz-brand-mark" src="<?php echo esc_url( $brand_logo_url ); ?>" alt="" width="44" height="45" decoding="async">
+				<span class="brand-text alz-brand-lockup__text"><strong class="alz-brand-lockup__ar"><?php echo esc_html( $brand_name ); ?></strong></span>
 			</a>
 			<button class="drawer-close" type="button" aria-label="<?php esc_attr_e( 'إغلاق القائمة', 'alzaherah' ); ?>"><span aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M6 6l12 12M18 6L6 18"/></svg></span></button>
 		</div>
@@ -151,3 +187,4 @@ $brand_logo_url = add_query_arg(
 		</div>
 	</aside>
 </div>
+<?php endif; ?>

@@ -73,7 +73,34 @@ if ( $alz_order_received && function_exists( 'wc_get_order' ) ) {
 	}
 }
 
-$alz_is_confirmation = $alz_order_received;
+$alz_is_confirmation   = $alz_order_received;
+$alz_payment_verified  = false;
+$alz_requires_receipt  = false;
+$alz_confirmation_state = $alz_is_confirmation ? 'pending' : '';
+
+if ( $alz_order ) {
+	$alz_order_status = sanitize_key( (string) $alz_order->get_status() );
+	if ( function_exists( 'alz_core_order_has_verified_payment' ) ) {
+		$alz_payment_verified = alz_core_order_has_verified_payment( $alz_order );
+	} else {
+		$alz_paid_at          = $alz_order->get_date_paid();
+		$alz_payment_verified = $alz_paid_at
+			&& $alz_paid_at->getTimestamp() > 0
+			&& ! in_array( $alz_order_status, array( 'cancelled', 'refunded', 'failed' ), true );
+	}
+	$alz_requires_receipt = class_exists( 'ALZ_Bank_Transfer' )
+		&& is_callable( array( 'ALZ_Bank_Transfer', 'requires_receipt' ) )
+		&& ALZ_Bank_Transfer::requires_receipt( $alz_order );
+
+	if ( $alz_payment_verified ) {
+		$alz_confirmation_state = 'paid';
+	} elseif ( in_array( $alz_order_status, array( 'cancelled', 'refunded', 'failed' ), true ) ) {
+		$alz_confirmation_state = 'failed';
+	}
+} elseif ( $alz_is_confirmation ) {
+	$alz_confirmation_state = 'invalid';
+}
+
 if ( $alz_order && function_exists( 'alz_core_order_registration_is_confirmed' ) ) {
 	$alz_registration_complete = alz_core_order_registration_is_confirmed( $alz_order );
 } elseif ( $alz_order ) {
@@ -96,31 +123,27 @@ $alz_products_url = ( class_exists( 'ALZ_Training_Products' ) && is_callable( ar
 $alz_browse_url   = ( 'training' === $alz_catalog_kind ) ? $alz_products_url : $alz_shop_url;
 
 if ( $alz_is_confirmation ) {
-	if ( 'training' === $alz_catalog_kind ) {
-		$alz_order_paid = $alz_order && function_exists( 'alz_core_order_has_verified_payment' ) && alz_core_order_has_verified_payment( $alz_order );
-		$alz_hero_title = $alz_order_paid
-			? __( 'تم تأكيد طلبك بنجاح', 'alzaherah' )
-			: __( 'تم إنشاء طلبك بنجاح', 'alzaherah' );
-		$alz_hero_text = $alz_order_paid
-			? __( 'تم تأكيد الدفع. رابط التنزيل متاح من حسابك لمدة 90 يومًا.', 'alzaherah' )
-			: __( 'احتفظ برقم الطلب وأرفق إيصال التحويل؛ يصبح التنزيل متاحًا بعد تأكيد الدفع فقط.', 'alzaherah' );
-		$alz_kicker = __( 'تأكيد الطلب', 'alzaherah' );
-	} elseif ( 'mixed' === $alz_catalog_kind ) {
-		$alz_hero_title = $alz_registration_complete
-			? __( 'تم تأكيد طلبك بنجاح', 'alzaherah' )
-			: __( 'تم إنشاء طلبك بنجاح', 'alzaherah' );
-		$alz_hero_text = $alz_registration_complete
-			? __( 'تم تأكيد الدفع. راجع ملخص الطلب لمتابعة التسجيل والتنزيل.', 'alzaherah' )
-			: __( 'احتفظ برقم الطلب؛ يُعتمد التسجيل والتنزيل بعد تأكيد الدفع.', 'alzaherah' );
-		$alz_kicker = __( 'تأكيد الطلب', 'alzaherah' );
-	} else {
-		$alz_hero_title = $alz_registration_complete
+	$alz_kicker = ( 'courses' === $alz_catalog_kind ) ? __( 'تأكيد التسجيل', 'alzaherah' ) : __( 'تأكيد الطلب', 'alzaherah' );
+	if ( 'paid' === $alz_confirmation_state ) {
+		$alz_hero_title = 'courses' === $alz_catalog_kind
 			? __( 'تم تسجيلك في الدورة بنجاح', 'alzaherah' )
-			: __( 'تم إنشاء طلب تسجيلك بنجاح', 'alzaherah' );
-		$alz_hero_text = $alz_registration_complete
-			? __( 'تم تأكيد الدفع والمقعد. احتفظ برقم الطلب الظاهر في ملخص التسجيل.', 'alzaherah' )
-			: __( 'احتفظ برقم الطلب وأرفق إيصال التحويل؛ سيؤكد المركز تسجيلك بعد مراجعة الدفع.', 'alzaherah' );
-		$alz_kicker = __( 'تأكيد التسجيل', 'alzaherah' );
+			: __( 'تم تأكيد طلبك بنجاح', 'alzaherah' );
+		$alz_hero_text = 'training' === $alz_catalog_kind
+			? __( 'تم التحقق من الدفع. رابط التنزيل متاح من حسابك لمدة 90 يومًا.', 'alzaherah' )
+			: ( 'mixed' === $alz_catalog_kind
+				? __( 'تم التحقق من الدفع. راجع ملخص الطلب لمتابعة التسجيل والتنزيل.', 'alzaherah' )
+				: __( 'تم التحقق من الدفع وتأكيد المقعد. احتفظ برقم الطلب الظاهر في الملخص.', 'alzaherah' ) );
+	} elseif ( 'failed' === $alz_confirmation_state ) {
+		$alz_hero_title = __( 'لم يكتمل الدفع', 'alzaherah' );
+		$alz_hero_text  = __( 'لم تُثبت عملية دفع ناجحة لهذا الطلب. يمكنك مراجعة الملخص والمحاولة مجددًا إذا كان الطلب ما زال قابلًا للدفع.', 'alzaherah' );
+	} elseif ( 'invalid' === $alz_confirmation_state ) {
+		$alz_hero_title = __( 'تعذّر عرض الطلب', 'alzaherah' );
+		$alz_hero_text  = __( 'رابط الطلب غير صالح أو لا يخص الحساب الحالي. افتح طلباتك من صفحة الحساب للمتابعة بأمان.', 'alzaherah' );
+	} else {
+		$alz_hero_title = __( 'تم استلام طلبك — الدفع قيد التأكيد', 'alzaherah' );
+		$alz_hero_text  = $alz_requires_receipt
+			? __( 'أرفق إيصال التحويل من قسم الطلب أدناه؛ لن يُعتمد الدفع أو التسجيل قبل مراجعته.', 'alzaherah' )
+			: __( 'يجري التحقق من نتيجة مزود الدفع تلقائيًا. لا يُعد الطلب مدفوعًا حتى يظهر تأكيد الدفع في هذه الصفحة وحسابك.', 'alzaherah' );
 	}
 } elseif ( 'training' === $alz_catalog_kind ) {
 	$alz_hero_title = __( 'إتمام الطلب والدفع', 'alzaherah' );
@@ -146,7 +169,7 @@ $alz_step_one_label = ( 'training' === $alz_catalog_kind || 'mixed' === $alz_cat
 get_header();
 ?>
 
-<main id="main" class="registration-page<?php echo $alz_is_confirmation ? ' is-confirmation' : ''; ?><?php echo $alz_catalog_kind ? ' is-kind-' . esc_attr( $alz_catalog_kind ) : ''; ?>" role="main">
+<main id="main" class="registration-page<?php echo $alz_is_confirmation ? ' is-confirmation is-payment-' . esc_attr( $alz_confirmation_state ) : ''; ?><?php echo $alz_catalog_kind ? ' is-kind-' . esc_attr( $alz_catalog_kind ) : ''; ?>" role="main">
 	<section class="registration-hero" aria-labelledby="registration-title">
 		<div class="container registration-hero-inner">
 			<div>
@@ -160,12 +183,20 @@ get_header();
 
 			<div class="registration-progress" aria-label="<?php echo esc_attr( $alz_progress_label ); ?>">
 				<span class="registration-progress-compact">
-					<?php echo esc_html( $alz_is_confirmation ? __( 'الخطوة 3 من 3 — التأكيد', 'alzaherah' ) : __( 'الخطوة 2 من 3 — الدفع', 'alzaherah' ) ); ?>
+					<?php
+					echo esc_html(
+						$alz_is_confirmation
+							? ( 'paid' === $alz_confirmation_state
+								? __( 'الخطوة 3 من 3 — تم التأكيد', 'alzaherah' )
+								: ( 'failed' === $alz_confirmation_state ? __( 'الدفع غير مكتمل', 'alzaherah' ) : __( 'الخطوة 2 من 3 — بانتظار تأكيد الدفع', 'alzaherah' ) ) )
+							: __( 'الخطوة 2 من 3 — الدفع', 'alzaherah' )
+					);
+					?>
 				</span>
 				<ol class="registration-progress-list">
 					<li class="registration-step is-complete"><span class="registration-step-indicator" aria-hidden="true"><bdi>1</bdi></span><strong><?php echo esc_html( $alz_step_one_label ); ?></strong></li>
-					<li class="registration-step <?php echo $alz_is_confirmation ? 'is-complete' : 'is-current'; ?>"<?php echo $alz_is_confirmation ? '' : ' aria-current="step"'; ?>><span class="registration-step-indicator" aria-hidden="true"><bdi>2</bdi></span><strong><?php esc_html_e( 'الدفع', 'alzaherah' ); ?></strong></li>
-					<li class="registration-step <?php echo $alz_is_confirmation ? 'is-current' : ''; ?>"<?php echo $alz_is_confirmation ? ' aria-current="step"' : ''; ?>><span class="registration-step-indicator" aria-hidden="true"><bdi>3</bdi></span><strong><?php esc_html_e( 'التأكيد', 'alzaherah' ); ?></strong></li>
+					<li class="registration-step <?php echo $alz_is_confirmation && 'paid' === $alz_confirmation_state ? 'is-complete' : 'is-current'; ?><?php echo 'failed' === $alz_confirmation_state ? ' is-error' : ''; ?>"<?php echo $alz_is_confirmation && 'paid' === $alz_confirmation_state ? '' : ' aria-current="step"'; ?>><span class="registration-step-indicator" aria-hidden="true"><bdi>2</bdi></span><strong><?php esc_html_e( 'الدفع', 'alzaherah' ); ?></strong></li>
+					<li class="registration-step <?php echo $alz_is_confirmation && 'paid' === $alz_confirmation_state ? 'is-current' : ''; ?>"<?php echo $alz_is_confirmation && 'paid' === $alz_confirmation_state ? ' aria-current="step"' : ''; ?>><span class="registration-step-indicator" aria-hidden="true"><bdi>3</bdi></span><strong><?php esc_html_e( 'التأكيد', 'alzaherah' ); ?></strong></li>
 				</ol>
 			</div>
 		</div>
@@ -183,26 +214,15 @@ get_header();
 			<?php elseif ( $alz_is_confirmation ) : ?>
 				<div class="registration-layout registration-confirmation-layout">
 					<div class="registration-checkout-card registration-confirmation-card">
-						<div class="registration-confirmation-heading">
-							<span class="registration-confirmation-icon" aria-hidden="true">✓</span>
+						<div class="registration-confirmation-heading is-<?php echo esc_attr( $alz_confirmation_state ); ?>">
+							<span class="registration-confirmation-icon" aria-hidden="true"><?php echo esc_html( 'paid' === $alz_confirmation_state ? '✓' : ( 'failed' === $alz_confirmation_state ? '×' : '!' ) ); ?></span>
 							<div>
-								<?php
-								if ( 'training' === $alz_catalog_kind ) {
-									$alz_order_paid = $alz_order && function_exists( 'alz_core_order_has_verified_payment' ) && alz_core_order_has_verified_payment( $alz_order );
-									$alz_confirm_h2 = $alz_order_paid ? __( 'تم تأكيد طلبك بنجاح', 'alzaherah' ) : __( 'تم إنشاء طلبك بنجاح', 'alzaherah' );
-								} elseif ( 'mixed' === $alz_catalog_kind ) {
-									$alz_confirm_h2 = $alz_registration_complete ? __( 'تم تأكيد طلبك بنجاح', 'alzaherah' ) : __( 'تم إنشاء طلبك بنجاح', 'alzaherah' );
-								} else {
-									$alz_confirm_h2 = $alz_registration_complete ? __( 'تم تسجيلك في الدورة بنجاح', 'alzaherah' ) : __( 'تم إنشاء طلب تسجيلك بنجاح', 'alzaherah' );
-								}
-								?>
-								<h2><?php echo esc_html( $alz_confirm_h2 ); ?></h2>
+								<h2><?php echo esc_html( $alz_hero_title ); ?></h2>
 								<p>
 									<?php
 									if ( $alz_order ) {
-										if ( 'training' === $alz_catalog_kind ) {
-											$alz_order_paid = function_exists( 'alz_core_order_has_verified_payment' ) && alz_core_order_has_verified_payment( $alz_order );
-											if ( $alz_order_paid ) {
+										if ( 'paid' === $alz_confirmation_state ) {
+											if ( 'training' === $alz_catalog_kind ) {
 												printf(
 													/* translators: %s: order number. */
 													esc_html__( 'اكتمل الدفع. رقم طلبك هو %s، وروابط التنزيل متاحة من حسابك لمدة 90 يومًا.', 'alzaherah' ),
@@ -211,20 +231,26 @@ get_header();
 											} else {
 												printf(
 													/* translators: %s: order number. */
-													esc_html__( 'رقم طلبك هو %s. أرفق الإيصال أدناه؛ يصبح التنزيل متاحًا بعد تأكيد الدفع فقط.', 'alzaherah' ),
+													esc_html__( 'اكتمل التحقق من الدفع للطلب %s، ويمكنك متابعة التفاصيل من حسابك.', 'alzaherah' ),
 													esc_html( $alz_order->get_order_number() )
 												);
 											}
-										} elseif ( $alz_registration_complete ) {
+										} elseif ( 'failed' === $alz_confirmation_state ) {
 											printf(
 												/* translators: %s: order number. */
-												esc_html__( 'اكتمل تسجيلك وتأكيد الدفع. رقم طلبك هو %s.', 'alzaherah' ),
+												esc_html__( 'لم تثبت عملية دفع ناجحة للطلب %s. لا تُعِد الدفع إلا من رابط «إكمال الدفع» الظاهر أدناه.', 'alzaherah' ),
+												esc_html( $alz_order->get_order_number() )
+											);
+										} elseif ( $alz_requires_receipt ) {
+											printf(
+												/* translators: %s: order number. */
+												esc_html__( 'رقم طلبك هو %s. أرفق إيصال التحويل أدناه؛ لن يُعتمد الدفع قبل مراجعته.', 'alzaherah' ),
 												esc_html( $alz_order->get_order_number() )
 											);
 										} else {
 											printf(
 												/* translators: %s: order number. */
-												esc_html__( 'رقم طلبك هو %s. أرفق الإيصال أدناه، وسيؤكد المركز الطلب بعد مراجعة التحويل.', 'alzaherah' ),
+												esc_html__( 'تم استلام الطلب %s، ويجري التحقق من نتيجة مزود الدفع تلقائيًا. ستتحدث الحالة فور ثبوت الدفع.', 'alzaherah' ),
 												esc_html( $alz_order->get_order_number() )
 											);
 										}
@@ -275,10 +301,20 @@ get_header();
 								</div>
 
 								<div class="confirmation-status-row">
-									<span><?php esc_html_e( 'حالة الطلب', 'alzaherah' ); ?></span>
-									<strong class="confirmation-status status-<?php echo esc_attr( $alz_order->get_status() ); ?>">
-										<?php echo esc_html( wc_get_order_status_name( $alz_order->get_status() ) ); ?>
+									<span><?php esc_html_e( 'حالة الدفع', 'alzaherah' ); ?></span>
+									<strong class="confirmation-status payment-<?php echo esc_attr( $alz_confirmation_state ); ?>">
+										<?php
+										echo esc_html(
+											'paid' === $alz_confirmation_state
+												? __( 'مدفوع ومؤكد', 'alzaherah' )
+												: ( 'failed' === $alz_confirmation_state ? __( 'غير مكتمل', 'alzaherah' ) : __( 'بانتظار التأكيد', 'alzaherah' ) )
+										);
+										?>
 									</strong>
+								</div>
+								<div class="confirmation-status-row confirmation-order-status-row">
+									<span><?php esc_html_e( 'معالجة الطلب', 'alzaherah' ); ?></span>
+									<strong><?php echo esc_html( wc_get_order_status_name( $alz_order->get_status() ) ); ?></strong>
 								</div>
 
 								<div class="registration-products confirmation-products">
@@ -326,11 +362,13 @@ get_header();
 								<h3><?php esc_html_e( 'الخطوة التالية', 'alzaherah' ); ?></h3>
 								<p>
 									<?php
-									echo esc_html(
-										'training' === $alz_catalog_kind
-											? __( 'احتفظ برقم الطلب. سيصل التأكيد وروابط التنزيل إلى بريدك بعد تحديث حالة الدفع.', 'alzaherah' )
-											: __( 'احتفظ برقم الطلب. سيصل تأكيد التسجيل والفاتورة إلى بريدك الإلكتروني بعد تحديث حالة الدفع.', 'alzaherah' )
-									);
+									if ( 'paid' === $alz_confirmation_state ) {
+										esc_html_e( 'احتفظ برقم الطلب. أصبح الدفع مؤكدًا ويمكنك متابعة تفاصيل الطلب من حسابك.', 'alzaherah' );
+									} elseif ( $alz_requires_receipt ) {
+										esc_html_e( 'ارفع إيصال التحويل مرة واحدة وانتظر نتيجة المراجعة؛ لا تنشئ طلبًا جديدًا لنفس العملية.', 'alzaherah' );
+									} else {
+										esc_html_e( 'لا تحتاج إلى ضغط زر للتحقق. تتحدث حالة الدفع تلقائيًا عند وصول تأكيد مزود الدفع.', 'alzaherah' );
+									}
 									?>
 								</p>
 
@@ -538,7 +576,7 @@ get_header();
 							<ul>
 								<li><span aria-hidden="true">✓</span> <?php esc_html_e( 'حماية بيانات الحساب والدفع', 'alzaherah' ); ?></li>
 								<li><span aria-hidden="true">✓</span> <?php echo esc_html( 'training' === $alz_catalog_kind ? __( 'تنزيل آمن بعد تأكيد الدفع لمدة 90 يومًا', 'alzaherah' ) : __( 'تأكيد التسجيل عبر البريد الإلكتروني', 'alzaherah' ) ); ?></li>
-								<li><span aria-hidden="true">✓</span> <?php esc_html_e( 'فاتورة إلكترونية بعد نجاح الدفع', 'alzaherah' ); ?></li>
+								<li><span aria-hidden="true">✓</span> <?php esc_html_e( 'تأكيد الطلب عبر البريد الإلكتروني بعد نجاح الدفع', 'alzaherah' ); ?></li>
 							</ul>
 						</div>
 

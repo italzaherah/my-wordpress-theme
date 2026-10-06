@@ -9,11 +9,8 @@
   position: relative;
   overflow: hidden;
   padding: 68px 0 58px;
-  color: #fff;
-  background:
-    radial-gradient(circle at 12% 20%, rgba(16,185,178,.35), transparent 28%),
-    radial-gradient(circle at 90% 10%, rgba(125,91,255,.30), transparent 29%),
-    linear-gradient(135deg, var(--navy-2), #352080 56%, #087f7a);
+  color: var(--alz-surface);
+  background: var(--alz-gradient-hero);
 }
 .courses-hero::after {
   content: "";
@@ -22,7 +19,7 @@
   height: 430px;
   left: -160px;
   bottom: -330px;
-  border: 74px solid rgba(255,255,255,.05);
+  border: 74px solid var(--alz-on-dark-soft);
   border-radius: 50%;
 }
 .courses-hero-inner {
@@ -39,8 +36,8 @@
   align-items: center;
   gap: 9px;
   margin-bottom: 12px;
-  color: #80fff7;
-  font-weight: 900;
+  color: var(--alz-teal-300);
+  font-weight: 700;
   font-size: .9rem;
 }
 .courses-kicker::before,
@@ -51,21 +48,23 @@
   width: 28px;
   height: 28px;
   border-radius: 9px;
-  color: #fff;
-  background: rgba(255,255,255,.12);
+  color: var(--alz-surface);
+  background: var(--alz-on-dark-subtle);
 }
 .courses-hero h1,
 .registration-hero h1 {
   margin: 0 0 12px;
-  font-size: clamp(2.2rem, 4vw, 3.7rem);
-  line-height: 1.28;
-  letter-spacing: -.04em;
+  color: var(--alz-on-dark);
+  font-size: clamp(1.75rem, 1.32rem + 1.9vw, 2.75rem);
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: 0;
 }
 .courses-hero p,
 .registration-hero p {
   max-width: 700px;
   margin: 0;
-  color: rgba(255,255,255,.75);
+  color: var(--alz-on-dark-muted);
   font-size: 1.02rem;
 }
 .courses-hero-badges {
@@ -73,11 +72,11 @@
   gap: 10px;
   min-width: 230px;
   padding: 20px 22px;
-  border: 1px solid rgba(255,255,255,.14);
+  border: 1px solid var(--alz-on-dark-subtle);
   border-radius: 20px;
-  background: rgba(255,255,255,.08);
+  background: var(--alz-on-dark-soft);
   backdrop-filter: blur(14px);
-  font-weight: 800;
+  font-weight: 600;
   font-size: .86rem;
 }
 .courses-content { padding: 54px 0 92px; }
@@ -95,7 +94,7 @@
   padding: 0 17px;
   border: 1px solid var(--line);
   border-radius: 16px;
-  background: #fff;
+  background: var(--alz-surface);
   box-shadow: var(--shadow-sm);
 }
 .courses-search span { color: var(--purple); font-size: 1.35rem; }
@@ -108,13 +107,13 @@
 }
 .courses-search button {
   flex: 0 0 auto;
-  min-height: 38px;
+  min-height: 44px;
   padding: 0 16px;
   border: 0;
-  border-radius: 10px;
-  color: #fff;
+  border-radius: 12px;
+  color: var(--alz-surface);
   background: var(--purple);
-  font-weight: 850;
+  font-weight: 600;
   cursor: pointer;
 }
 .courses-ordering .woocommerce-ordering { margin: 0; }
@@ -124,7 +123,7 @@
   border: 1px solid var(--line);
   border-radius: 16px;
   outline: 0;
-  background: #fff;
+  background: var(--alz-surface);
   color: var(--navy);
   box-shadow: var(--shadow-sm);
 }
@@ -155,31 +154,44 @@
   width: 100%;
   height: 100%;
   min-height: 100%;
-  background: linear-gradient(135deg, #eaf6f5, #f0f4f8);
+  background: var(--alz-surface-subtle);
   color: var(--navy);
   font-size: .92rem;
-  font-weight: 800;
-}
-.alz-training-products-page .courses-catalog-grid {
-  justify-content: stretch;
+  font-weight: 700;
 }
 .alz-training-products-page .courses-content {
   min-height: 0;
+  padding-bottom: 0;
 }
 .alz-training-products-page #training-products-grid {
   align-content: start;
-  align-items: start;
+  align-items: stretch;
   grid-auto-rows: auto;
   min-height: 0;
+  width: 100%;
 }
 .alz-training-products-page #training-products-grid > .catalog-course-card {
   min-height: 0;
 }
-.alz-training-products-page #training-products-grid > .catalog-course-card:only-child {
-  width: min(100%, 420px);
-  max-width: 420px;
-  align-self: start;
+/* منتج واحد: توسيط البطاقة وإنهاء القسم دون فراغ جانبي زائد. */
+.alz-training-products-page #training-products-grid:has(> .catalog-course-card:only-child) {
+  grid-template-columns: minmax(0, 420px);
+  justify-content: center;
+  justify-items: stretch;
 }
+.alz-training-products-page #training-products-grid > .catalog-course-card:only-child {
+  width: 100%;
+  max-width: 420px;
+  justify-self: center;
+  margin-inline: auto;
+}
+/* منتجان: شبكة متوازنة ومتمركزة دون تمدد على عرض الصفحة كاملًا. */
+.alz-training-products-page #training-products-grid:has(> .catalog-course-card:first-child:nth-last-child(2)) {
+  grid-template-columns: repeat(2, minmax(0, 420px));
+  justify-content: center;
+  gap: 24px;
+}
+/* ثلاثة فأكثر: تبقى شبكة الدورات المعتادة عبر .courses-catalog-grid. */
 .registration-download-note,
 .registration-line-price,
 .registration-price-compare {
@@ -196,7 +208,7 @@
 .registration-price-compare ins {
   color: var(--navy);
   text-decoration: none;
-  font-weight: 800;
+  font-weight: 700;
 }
 .registration-empty-actions {
   display: flex;
@@ -244,22 +256,28 @@
 .catalog-course-card .course-footer { padding-top: 12px; }
 .catalog-course-card .price strong { font-size: 1.1rem; }
 .catalog-course-card .course-meta a:hover { color: var(--purple); }
-.catalog-course-card .course-badge.is-closed { background: #fff0f0; color: #b42318; }
+.catalog-course-card .course-badge.is-closed { background: var(--alz-danger-surface); color: var(--alz-danger); }
 .course-register {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  width: 100%;
   gap: 7px;
-  color: var(--purple);
-  font-weight: 900;
-  font-size: .88rem;
+  padding: 8px 16px;
+  border-radius: 12px;
+  background: var(--purple);
+  color: var(--alz-surface);
+  font-weight: 600;
+  font-size: .9rem;
 }
-.course-register:hover { color: var(--teal-dark); }
-.course-register.is-closed { color: #7b4650; }
+.course-register:hover { background: var(--purple-dark); color: var(--alz-surface); }
+.course-register.is-closed { background: var(--alz-line); color: var(--alz-muted); }
 .course-register.is-ended {
-  padding: 5px 9px;
-  border-radius: 9px;
-  background: #fff0f2;
-  color: #92283b;
+  padding: 8px 16px;
+  border-radius: 12px;
+  background: var(--alz-danger-surface);
+  color: var(--alz-danger-text);
 }
 
 @media (min-width: 1100px) {
@@ -317,7 +335,7 @@
   padding: 50px 28px;
   border: 1px solid var(--line);
   border-radius: 24px;
-  background: #fff;
+  background: var(--alz-surface);
   box-shadow: var(--shadow-sm);
   text-align: center;
 }
@@ -329,7 +347,7 @@
   height: 70px;
   margin: 0 auto 16px;
   border-radius: 21px;
-  background: linear-gradient(135deg, #f0eaff, #e7fbfa);
+  background: var(--alz-surface-subtle);
   font-size: 2rem;
 }
 .courses-empty h2,
@@ -350,18 +368,18 @@
 .courses-pagination .page-numbers span {
   display: grid;
   place-items: center;
-  min-width: 42px;
-  height: 42px;
+  min-width: var(--alz-control-height-md);
+  height: var(--alz-control-height-md);
   padding: 0 10px;
   border: 1px solid var(--line);
   border-radius: 12px;
-  background: #fff;
+  background: var(--alz-surface);
   color: var(--navy);
 }
 .courses-pagination .page-numbers .current {
   border-color: var(--purple);
   background: var(--purple);
-  color: #fff;
+  color: var(--alz-surface);
 }
 
 /* صفحة التسجيل والدفع */
@@ -369,11 +387,8 @@
   position: relative;
   overflow: hidden;
   padding: 64px 0 54px;
-  color: #fff;
-  background:
-    radial-gradient(circle at 14% 20%, rgba(16,185,178,.32), transparent 28%),
-    radial-gradient(circle at 88% 18%, rgba(126,87,255,.28), transparent 30%),
-    linear-gradient(135deg, var(--navy-2), #34207d 56%, #087f7a);
+  color: var(--alz-surface);
+  background: var(--alz-gradient-hero);
 }
 .registration-hero-inner {
   display: grid;
@@ -386,9 +401,9 @@
   grid-template-columns: repeat(3,1fr);
   gap: 8px;
   padding: 16px;
-  border: 1px solid rgba(255,255,255,.13);
+  border: 1px solid var(--alz-on-dark-subtle);
   border-radius: 22px;
-  background: rgba(255,255,255,.08);
+  background: var(--alz-on-dark-soft);
   backdrop-filter: blur(14px);
 }
 .registration-step {
@@ -398,7 +413,7 @@
   gap: 8px;
   padding: 14px 7px;
   text-align: center;
-  color: rgba(255,255,255,.58);
+  color: var(--alz-on-dark-muted);
   font-size: .78rem;
 }
 .registration-step:not(:last-child)::after {
@@ -408,26 +423,26 @@
   left: -13px;
   width: 26px;
   height: 2px;
-  background: rgba(255,255,255,.18);
+  background: var(--alz-on-dark-subtle);
 }
 .registration-step span {
   display: grid;
   place-items: center;
   width: 38px;
   height: 38px;
-  border: 1px solid rgba(255,255,255,.2);
+  border: 1px solid var(--alz-on-dark-subtle);
   border-radius: 12px;
-  background: rgba(255,255,255,.07);
-  font-weight: 900;
+  background: var(--alz-on-dark-soft);
+  font-weight: 700;
 }
 .registration-step.is-current,
-.registration-step.is-complete { color: #fff; }
+.registration-step.is-complete { color: var(--alz-surface); }
 .registration-step.is-current span {
   border-color: transparent;
-  background: linear-gradient(135deg,var(--purple),var(--teal));
-  box-shadow: 0 10px 25px rgba(16,185,178,.25);
+  background: var(--alz-gradient-action);
+  box-shadow: var(--alz-shadow-md);
 }
-.registration-step.is-complete span { border-color: transparent; background: #80fff7; color: var(--navy); }
+.registration-step.is-complete span { border-color: transparent; background: var(--alz-teal-300); color: var(--navy); }
 .registration-content { padding: 58px 0 92px; }
 .registration-layout {
   display: grid;
@@ -441,7 +456,7 @@
 .registration-empty {
   border: 1px solid var(--line);
   border-radius: 24px;
-  background: #fff;
+  background: var(--alz-surface);
   box-shadow: var(--shadow-sm);
 }
 .registration-checkout-card { min-width: 0; padding: 30px; }
@@ -459,16 +474,16 @@
   display: grid;
   place-items: center;
   border-radius: 14px;
-  color: #fff;
-  background: linear-gradient(135deg,var(--purple),var(--teal));
-  font-weight: 900;
+  color: var(--alz-surface);
+  background: var(--alz-gradient-action);
+  font-weight: 700;
 }
 .registration-section-heading h2 { margin: 0 0 4px; color: var(--navy); font-size: 1.45rem; }
 .registration-section-heading p { margin: 0; color: var(--muted); font-size: .88rem; }
 .registration-sidebar { position: sticky; top: 104px; display: grid; gap: 16px; }
 .registration-summary-card,
 .registration-trust-card { padding: 22px; }
-.registration-summary-label { display: block; margin-bottom: 15px; color: var(--purple); font-size: .82rem; font-weight: 900; }
+.registration-summary-label { display: block; margin-bottom: 15px; color: var(--purple); font-size: .82rem; font-weight: 600; }
 .registration-products { display: grid; gap: 14px; }
 .registration-product { display: grid; grid-template-columns: 68px minmax(0,1fr); gap: 12px; align-items: center; }
 .registration-product-image { overflow: hidden; width: 68px; height: 68px; border-radius: 14px; background: var(--surface-2); }
@@ -480,10 +495,10 @@
 .registration-trust-card h3 { margin: 0 0 14px; color: var(--navy); font-size: 1rem; }
 .registration-trust-card ul { display: grid; gap: 11px; margin: 0; padding: 0; list-style: none; color: var(--muted); font-size: .84rem; }
 .registration-trust-card li { display: flex; align-items: flex-start; gap: 8px; }
-.registration-trust-card li span { color: var(--success); font-weight: 900; }
-.registration-back-link { display: inline-flex; align-items: center; justify-content: center; gap: 7px; width: 100%; color: var(--purple); text-align: center; font-size: .88rem; font-weight: 900; }
+.registration-trust-card li span { color: var(--success); font-weight: 700; }
+.registration-back-link { display: inline-flex; align-items: center; justify-content: center; gap: 7px; width: 100%; color: var(--purple); text-align: center; font-size: .88rem; font-weight: 600; }
 .registration-empty { max-width: 680px; margin-inline: auto; padding: 55px 30px; text-align: center; }
-.registration-empty-icon { display: grid; place-items: center; width: 72px; height: 72px; margin: 0 auto 18px; border-radius: 22px; background: linear-gradient(135deg,#f0eaff,#e7fbfa); font-size: 2rem; }
+.registration-empty-icon { display: grid; place-items: center; width: 72px; height: 72px; margin: 0 auto 18px; border-radius: 22px; background: var(--alz-surface-subtle); font-size: 2rem; }
 .registration-empty h2 { margin: 0 0 8px; color: var(--navy); }
 .registration-empty p { max-width: 520px; margin: 0 auto 24px; color: var(--muted); }
 
@@ -496,9 +511,9 @@
   min-height: 54px;
   margin: 0 0 20px;
   padding: 15px 17px;
-  border: 1px solid #ded5fb;
+  border: 1px solid var(--alz-action-disabled);
   border-radius: 14px;
-  background: #f1edff;
+  background: var(--alz-info-surface);
   color: var(--navy);
   line-height: 1.75;
 }
@@ -524,18 +539,18 @@
 .registration-checkout .woocommerce-message .button,
 .registration-checkout .woocommerce-info .button {
   float: left;
-  min-height: 38px;
+  min-height: var(--alz-control-height-md);
   margin: -4px 16px -4px 0;
   padding: 7px 14px;
   border: 0;
   border-radius: 10px;
-  background: #fff;
+  background: var(--alz-surface);
   color: var(--purple);
   font-size: .82rem;
-  font-weight: 900;
-  box-shadow: 0 3px 10px rgba(25,32,63,.08);
+  font-weight: 600;
+  box-shadow: var(--alz-shadow-md);
 }
-.registration-checkout .woocommerce-error { border-color: #f3caca; background: #fff0f0; }
+.registration-checkout .woocommerce-error { border-color: var(--alz-action-disabled); background: var(--alz-danger-surface); }
 .registration-checkout form.checkout { display: block; }
 .registration-checkout .col2-set {
   display: grid;
@@ -548,7 +563,7 @@
 .registration-checkout .col-2 { float: none; width: auto; }
 .registration-checkout h3 { margin: 0 0 16px; color: var(--navy); }
 .registration-checkout .form-row { float: none; width: 100%; margin: 0 0 15px; padding: 0; }
-.registration-checkout label { display: block; margin-bottom: 6px; color: var(--navy); font-size: .84rem; font-weight: 800; }
+.registration-checkout label { display: block; margin-bottom: 6px; color: var(--navy); font-size: .84rem; font-weight: 600; }
 .registration-checkout input.input-text,
 .registration-checkout textarea,
 .registration-checkout select,
@@ -559,29 +574,29 @@
   border: 1px solid var(--line);
   border-radius: 13px;
   outline: 0;
-  background: #fff;
+  background: var(--alz-surface);
 }
 .registration-checkout textarea { min-height: 105px; resize: vertical; }
 .registration-checkout input:focus,
 .registration-checkout textarea:focus,
-.registration-checkout select:focus { border-color: var(--purple); box-shadow: 0 0 0 4px rgba(91,44,203,.08); }
+.registration-checkout select:focus { border-color: var(--purple); box-shadow: var(--alz-shadow-md); }
 .registration-checkout #order_review_heading { margin-top: 26px; padding-top: 24px; border-top: 1px solid var(--line); }
 .registration-checkout table.shop_table { overflow: hidden; width: 100%; border: 1px solid var(--line); border-radius: 15px; border-collapse: separate; border-spacing: 0; }
 .registration-checkout table.shop_table th,
 .registration-checkout table.shop_table td { padding: 13px; border-color: var(--line); }
 .registration-checkout #payment { border-radius: 16px; background: var(--surface-2); }
 .registration-checkout #payment ul.payment_methods { border-color: var(--line); }
-.registration-checkout #payment div.payment_box { border-radius: 12px; background: #fff; color: var(--muted); }
-.registration-checkout #payment div.payment_box::before { border-bottom-color: #fff; }
+.registration-checkout #payment div.payment_box { border-radius: 12px; background: var(--alz-surface); color: var(--muted); }
+.registration-checkout #payment div.payment_box::before { border-bottom-color: var(--alz-surface); }
 .registration-checkout #place_order {
   width: 100%;
   min-height: 54px;
   border: 0;
   border-radius: 14px;
-  background: linear-gradient(135deg,var(--purple),#7342dc);
-  color: #fff;
-  font-weight: 900;
-  box-shadow: 0 12px 30px rgba(91,44,203,.25);
+  background: var(--alz-gradient-action);
+  color: var(--alz-surface);
+  font-weight: 700;
+  box-shadow: var(--alz-shadow-md);
 }
 
 /* بقية صفحات WooCommerce */
@@ -590,9 +605,9 @@
 .woocommerce-main div.product div.images,
 .woocommerce-main div.product div.summary { float: none; width: auto; margin: 0; }
 .woocommerce-main div.product .product_title { color: var(--navy); font-size: clamp(2rem,4vw,3.1rem); line-height: 1.35; }
-.woocommerce-main div.product p.price { display:flex; flex-wrap:wrap; align-items:baseline; gap:8px; color:var(--purple); font-size: 1.6rem; font-weight: 900; line-height:1.45; }
-.woocommerce-main div.product p.price del { color:#8793a3; font-size:.58em; font-weight:700; text-decoration-color:#b45b68; text-decoration-thickness:1px; opacity:1; }
-.woocommerce-main div.product p.price ins { order:-1; color:var(--purple); text-decoration:none; }
+.woocommerce-main div.product p.price { display:flex; flex-wrap:wrap; align-items:baseline; gap:8px; color:var(--alz-price-color); font-size: 1.6rem; font-weight: 700; line-height:1.45; font-variant-numeric:tabular-nums; }
+.woocommerce-main div.product p.price del { color:var(--alz-price-old-color); font-size:.58em; font-weight:700; text-decoration-color:var(--alz-price-old-color); text-decoration-thickness:1px; opacity:1; }
+.woocommerce-main div.product p.price ins { order:-1; color:var(--alz-price-color); text-decoration:none; }
 .woocommerce-main div.product p.price .woocommerce-Price-amount { white-space:nowrap; }
 .woocommerce-main div.product form.cart .button,
 .woocommerce-account .woocommerce button.button,
@@ -600,11 +615,12 @@
   min-height: 48px;
   border-radius: 13px;
   background: var(--purple);
-  color: #fff;
+  color: var(--alz-surface);
 }
-/* صفحة حساب المتدرب */
+/* صفحة حساب المتدرب — العرض تتحكم به طبقة v4 للحساب (header container). */
 .woocommerce-account .page-content {
-  max-width: 1120px;
+  width: 100%;
+  max-width: none;
 }
 
 /* بعد تسجيل الدخول: قائمة جانبية + محتوى الحساب
@@ -613,7 +629,7 @@
 .woocommerce-account.logged-in .woocommerce,
 .woocommerce:has(> .woocommerce-MyAccount-navigation) {
   display: grid;
-  grid-template-columns: 260px minmax(0, 1fr);
+  grid-template-columns: minmax(13.75rem, 16.25rem) minmax(0, 1fr);
   grid-template-areas:
     "notices notices"
     "nav     content";
@@ -633,17 +649,17 @@
     top: 24px;
   }
 }
-.woocommerce-account .woocommerce-MyAccount-navigation ul { overflow: hidden; margin: 0; padding: 0; border: 1px solid var(--line); border-radius: 18px; background: #fff; list-style: none; }
-.woocommerce-account .woocommerce-MyAccount-navigation a { display: block; padding: 12px 15px; border-bottom: 1px solid var(--line); color: var(--navy); font-weight: 800; }
+.woocommerce-account .woocommerce-MyAccount-navigation ul { overflow: hidden; margin: 0; padding: 0; border: 1px solid var(--line); border-radius: 18px; background: var(--alz-surface); list-style: none; }
+.woocommerce-account .woocommerce-MyAccount-navigation a { display: block; padding: 12px 15px; border-bottom: 1px solid var(--line); color: var(--navy); font-weight: 600; }
 .woocommerce-account .woocommerce-MyAccount-navigation li:last-child a { border-bottom: 0; }
-.woocommerce-account .woocommerce-MyAccount-navigation .is-active a { background: #f1edff; color: var(--purple); }
+.woocommerce-account .woocommerce-MyAccount-navigation .is-active a { background: var(--alz-info-surface); color: var(--purple); }
 
 /* بطاقة بيانات الفاتورة في حساب المتدرب. */
 .alz-billing-overview {
   overflow: hidden;
   border: 1px solid var(--line);
   border-radius: 22px;
-  background: #fff;
+  background: var(--alz-surface);
   box-shadow: var(--shadow-sm);
 }
 .alz-billing-overview__header {
@@ -653,14 +669,14 @@
   gap: 22px;
   padding: 24px;
   border-bottom: 1px solid var(--line);
-  background: linear-gradient(135deg,#fbfcff,#f4f1ff);
+  background: var(--alz-surface-subtle);
 }
 .alz-billing-overview__eyebrow {
   display: block;
   margin-bottom: 4px;
   color: var(--purple);
   font-size: .76rem;
-  font-weight: 900;
+  font-weight: 700;
 }
 .alz-billing-overview__header h2 {
   margin: 0 0 6px;
@@ -683,9 +699,9 @@
   border: 0;
   border-radius: 12px;
   background: var(--purple);
-  color: #fff;
+  color: var(--alz-surface);
   font-size: .84rem;
-  font-weight: 900;
+  font-weight: 600;
   white-space: nowrap;
 }
 .alz-billing-overview__grid {
@@ -698,25 +714,25 @@
 .alz-billing-overview__grid > div {
   min-width: 0;
   padding: 16px 0;
-  border-bottom: 1px solid #edf1f4;
+  border-bottom: 1px solid var(--alz-surface-tint);
 }
 .alz-billing-overview__grid > div:nth-child(odd) {
   padding-left: 20px;
 }
 .alz-billing-overview__grid > div:nth-child(even) {
   padding-right: 20px;
-  border-right: 1px solid #edf1f4;
+  border-right: 1px solid var(--alz-surface-tint);
 }
 .alz-billing-overview__grid dt {
   margin-bottom: 5px;
   color: var(--muted);
   font-size: .76rem;
-  font-weight: 800;
+  font-weight: 700;
 }
 .alz-billing-overview__grid dd {
   margin: 0;
   color: var(--navy);
-  font-weight: 850;
+  font-weight: 700;
   overflow-wrap: anywhere;
 }
 .alz-billing-overview__grid dd[dir="ltr"] {
@@ -727,9 +743,9 @@
 .alz-billing-overview__empty {
   margin: 22px;
   padding: 18px;
-  border: 1px dashed #cbd5e1;
+  border: 1px dashed var(--alz-action-disabled);
   border-radius: 14px;
-  background: #f8fafc;
+  background: var(--alz-surface-subtle);
   color: var(--muted);
   text-align: center;
 }
@@ -744,7 +760,7 @@
   padding: 24px;
   border: 1px solid var(--line);
   border-radius: 22px;
-  background: #fff;
+  background: var(--alz-surface);
   box-shadow: var(--shadow-sm);
 }
 .woocommerce-account .woocommerce-address-fields__field-wrapper {
@@ -766,7 +782,7 @@
   margin-bottom: 6px;
   color: var(--navy);
   font-size: .82rem;
-  font-weight: 850;
+  font-weight: 600;
 }
 .woocommerce-account .woocommerce-address-fields input.input-text,
 .woocommerce-account .woocommerce-address-fields select,
@@ -774,9 +790,9 @@
   width: 100%;
   min-height: 48px;
   padding: 10px 12px;
-  border: 1px solid #d8e0e9;
+  border: 1px solid var(--alz-action-disabled);
   border-radius: 12px;
-  background: #fff;
+  background: var(--alz-surface);
 }
 .woocommerce-account .woocommerce-address-fields p:last-child {
   margin: 20px 0 0;
@@ -806,8 +822,8 @@
   padding: 32px;
   border: 1px solid var(--line);
   border-radius: 24px;
-  background: #fff;
-  box-shadow: 0 14px 42px rgba(20, 30, 60, .07);
+  background: var(--alz-surface);
+  box-shadow: var(--alz-shadow-md);
 }
 .woocommerce-account:not(.logged-in) .woocommerce #customer_login h2 {
   margin: 0 0 22px;
@@ -829,7 +845,7 @@
   display: block;
   margin-bottom: 7px;
   color: var(--navy);
-  font-weight: 800;
+  font-weight: 600;
 }
 .woocommerce-account:not(.logged-in) .woocommerce form .input-text {
   width: 100%;
@@ -837,7 +853,7 @@
   padding: 10px 14px;
   border: 1px solid var(--line);
   border-radius: 13px;
-  background: #fff;
+  background: var(--alz-surface);
   color: var(--navy);
   font: inherit;
   box-sizing: border-box;
@@ -845,7 +861,7 @@
 .woocommerce-account:not(.logged-in) .woocommerce form .input-text:focus {
   outline: 0;
   border-color: var(--purple);
-  box-shadow: 0 0 0 4px rgba(91,44,203,.08);
+  box-shadow: var(--alz-shadow-md);
 }
 .woocommerce-account:not(.logged-in) .woocommerce .password-input {
   display: block;
@@ -865,14 +881,14 @@
   min-width: 145px;
   padding-inline: 22px;
   border: 0;
-  font-weight: 900;
+  font-weight: 600;
 }
 .woocommerce-account:not(.logged-in) .woocommerce .woocommerce-LostPassword {
   margin: 16px 0 0;
 }
 .woocommerce-account:not(.logged-in) .woocommerce .woocommerce-LostPassword a {
   color: var(--purple);
-  font-weight: 800;
+  font-weight: 600;
 }
 .woocommerce-account:not(.logged-in) .woocommerce .woocommerce-privacy-policy-text {
   color: var(--muted);
@@ -1083,7 +1099,7 @@
   padding: 18px 20px;
   border: 1px solid var(--line);
   border-radius: 16px;
-  background: #fff;
+  background: var(--alz-surface);
 }
 
 .trainee-stat strong {
@@ -1101,7 +1117,7 @@
 .trainee-recent {
   border: 1px solid var(--line);
   border-radius: 18px;
-  background: #fff;
+  background: var(--alz-surface);
   overflow: hidden;
 }
 
@@ -1121,7 +1137,7 @@
 
 .trainee-recent-head a {
   color: var(--purple);
-  font-weight: 800;
+  font-weight: 600;
   font-size: 0.9rem;
 }
 
@@ -1141,7 +1157,7 @@
 }
 
 .trainee-order:hover {
-  background: #faf9ff;
+  background: var(--alz-surface-subtle);
 }
 
 .trainee-order-main strong {
@@ -1157,36 +1173,44 @@
   flex-shrink: 0;
   padding: 5px 12px;
   border-radius: 999px;
-  background: #eef1f6;
+  background: var(--alz-surface-tint);
   color: var(--navy);
   font-size: 0.8rem;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .trainee-order-status.status-completed,
 .trainee-order-status.status-processing {
-  background: #e5f8f0;
-  color: #0a7d55;
+  background: var(--alz-order-paid-surface);
+  color: var(--alz-order-paid);
 }
 
-.trainee-order-status.status-on-hold,
+.trainee-order-status.status-on-hold {
+  background: var(--alz-order-hold-surface);
+  color: var(--alz-order-hold);
+}
+
 .trainee-order-status.status-pending {
-  background: #fff4e0;
-  color: #955e0a;
+  background: var(--alz-order-wait-surface);
+  color: var(--alz-order-wait);
+}
+
+.trainee-order-status.status-failed {
+  background: var(--alz-order-fail-surface);
+  color: var(--alz-order-fail);
 }
 
 .trainee-order-status.status-cancelled,
-.trainee-order-status.status-refunded,
-.trainee-order-status.status-failed {
-  background: #fdeaea;
-  color: #b02a2a;
+.trainee-order-status.status-refunded {
+  background: var(--alz-order-off-surface);
+  color: var(--alz-order-off-text);
 }
 
 .trainee-empty {
   padding: 30px 24px;
   border: 1px dashed var(--line);
   border-radius: 18px;
-  background: #fff;
+  background: var(--alz-surface);
   text-align: center;
 }
 
@@ -1251,21 +1275,21 @@ body.alzaherah-login-view .woocommerce #customer_login > .u-column1 {
   z-index: 2;
   padding: 6px 13px;
   border-radius: 999px;
-  background: #e5f8f0;
-  color: #0a7d55;
+  background: var(--alz-success-surface);
+  color: var(--alz-success);
   font-size: .78rem;
-  font-weight: 900;
+  font-weight: 600;
 }
-.course-status-badge.is-full { background: #fff0f0; color: #b42318; }
+.course-status-badge.is-full { background: var(--alz-danger-surface); color: var(--alz-danger); }
 .course-status-badge.is-ended {
-  border: 1px solid rgba(255,255,255,.58);
-  background: #8e2940;
-  color: #fff;
-  box-shadow: 0 8px 20px rgba(93,20,39,.24);
+  border: 1px solid var(--alz-on-dark-muted);
+  background: var(--alz-danger-text);
+  color: var(--alz-surface);
+  box-shadow: var(--alz-shadow-md);
 }
-.course-status-badge.is-postponed { background: #fff4e0; color: #955e0a; }
-.course-status-badge.is-cancelled { background: #fdeaea; color: #b02a2a; }
-.course-status-badge.is-undated { background: #eef4fb; color: #0f3d63; }
+.course-status-badge.is-postponed { background: var(--alz-warning-surface); color: var(--alz-warning-text); }
+.course-status-badge.is-cancelled { background: var(--alz-danger-surface); color: var(--alz-danger); }
+.course-status-badge.is-undated { background: var(--alz-info-surface); color: var(--alz-info-text); }
 .course-card-badges {
   position: absolute;
   top: 14px;
@@ -1286,34 +1310,34 @@ body.alzaherah-login-view .woocommerce #customer_login > .u-column1 {
   align-items: center;
   padding: 6px 13px;
   border-radius: 999px;
-  background: #eef4fb;
-  color: #0f3d63;
+  background: var(--alz-info-surface);
+  color: var(--alz-info-text);
   font-size: .78rem;
-  font-weight: 900;
+  font-weight: 600;
   line-height: 1.35;
-  box-shadow: 0 8px 18px rgba(15, 61, 99, .08);
+  box-shadow: var(--alz-shadow-md);
 }
 .course-date-chip.is-undated {
-  background: #fff4e0;
-  color: #955e0a;
+  background: var(--alz-warning-surface);
+  color: var(--alz-warning-text);
 }
 .course-status-notice.is-undated {
   margin: 0 0 14px;
   padding: 12px 14px;
   border-radius: 14px;
-  background: #fff8ec;
-  color: #7a4b08;
+  background: var(--alz-warning-surface);
+  color: var(--alz-warning-text);
   font-weight: 700;
 }
 .registration-course-date {
   display: block;
   margin-top: 4px;
-  color: #0f3d63;
+  color: var(--alz-info-text);
   font-weight: 700;
 }
 .course-info-card > .course-status-badge { position: static; display: inline-block; margin-bottom: 12px; }
 .course-card.is-status-ended {
-  border-color: #e7cbd1;
+  border-color: var(--alz-action-disabled);
 }
 .course-card.is-status-ended .course-cover img,
 .alz3-course-card.is-status-ended .alz3-course-media img {
@@ -1327,8 +1351,8 @@ body.alzaherah-login-view .woocommerce #customer_login > .u-column1 {
 .alz3-course-footer a.is-course-closed {
   padding: 5px 9px;
   border-radius: 9px;
-  background: #fff0f2;
-  color: #92283b;
+  background: var(--alz-danger-surface);
+  color: var(--alz-danger-text);
 }
 
 /* --- شريحة المقاعد المتبقية --- */
@@ -1339,17 +1363,17 @@ body.alzaherah-login-view .woocommerce #customer_login > .u-column1 {
   z-index: 2;
   padding: 5px 11px;
   border-radius: 999px;
-  background: rgba(15, 23, 42, .78);
-  color: #fff;
+  background: var(--alz-scrim);
+  color: var(--alz-surface);
   font-size: .75rem;
-  font-weight: 800;
+  font-weight: 600;
   backdrop-filter: blur(6px);
 }
 
 /* --- شريط العروض والكوبونات --- */
 .promo-strip {
-  background: linear-gradient(135deg, #2b1a6b, #087f7a);
-  color: #fff;
+  background: var(--alz-gradient-hero);
+  color: var(--alz-surface);
 }
 .promo-strip-inner {
   display: flex;
@@ -1359,13 +1383,13 @@ body.alzaherah-login-view .woocommerce #customer_login > .u-column1 {
   padding: 13px 0;
 }
 .promo-strip-icon { font-size: 1.3rem; }
-.promo-strip p { margin: 0; font-weight: 800; }
+.promo-strip p { margin: 0; font-weight: 700; }
 .promo-strip-code {
   padding: 6px 15px;
-  border: 1px dashed rgba(255,255,255,.55);
+  border: 1px dashed var(--alz-on-dark-muted);
   border-radius: 10px;
-  background: rgba(255,255,255,.1);
-  font-weight: 900;
+  background: var(--alz-on-dark-soft);
+  font-weight: 700;
   letter-spacing: .06em;
 }
 
@@ -1382,21 +1406,21 @@ body.alzaherah-login-view .woocommerce #customer_login > .u-column1 {
   padding: 16px 18px;
   border: 1px solid var(--line);
   border-radius: 18px;
-  background: #fff;
+  background: var(--alz-surface);
   color: inherit;
   box-shadow: var(--shadow-sm);
   transition: transform .15s ease, box-shadow .15s ease;
 }
-.alz3-top-card:hover { transform: translateY(-3px); box-shadow: 0 14px 34px rgba(20,30,60,.1); }
+.alz3-top-card:hover { transform: translateY(-3px); box-shadow: var(--alz-shadow-md); }
 .alz3-top-rank {
   flex: 0 0 34px;
   height: 34px;
   display: grid;
   place-items: center;
   border-radius: 11px;
-  background: linear-gradient(135deg, var(--purple), var(--teal));
-  color: #fff;
-  font-weight: 900;
+  background: var(--alz-gradient-action);
+  color: var(--alz-surface);
+  font-weight: 700;
 }
 .alz3-top-media {
   flex: 0 0 56px;
@@ -1412,7 +1436,7 @@ body.alzaherah-login-view .woocommerce #customer_login > .u-column1 {
 .alz3-top-body { flex: 1; min-width: 0; }
 .alz3-top-body strong { display: block; overflow: hidden; color: var(--navy); white-space: nowrap; text-overflow: ellipsis; }
 .alz3-top-body small { color: var(--muted); }
-.alz3-top-price { flex-shrink: 0; color: var(--purple); font-weight: 900; }
+.alz3-top-price { flex-shrink: 0; color: var(--purple); font-weight: 700; }
 
 /* --- صفحة الدورة الواحدة --- */
 .course-single-hero { padding: 56px 0 46px; }
@@ -1430,31 +1454,106 @@ body.alzaherah-login-view .woocommerce #customer_login > .u-column1 {
   box-shadow: var(--shadow-sm);
 }
 .course-single-image img { display: block; width: 100%; height: auto; }
+
+/* Exam promotion artwork is a complete design: never crop text or badges. */
+.commerce-card.is-kind-exam .course-cover {
+  display: block;
+  aspect-ratio: 16 / 9;
+  background: var(--alz-surface-subtle);
+}
+.commerce-card.is-kind-exam .course-cover > img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: contain;
+  object-position: center;
+  transform: none;
+}
+.exam-single-page .exam-promo-gallery {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+.exam-single-page .exam-promo-gallery > h2 {
+  margin: 0;
+  color: var(--alz-text-primary);
+  font-size: 1.25rem;
+}
+.exam-single-page .exam-promo-gallery > p {
+  margin: 0;
+  color: var(--alz-text-muted);
+  font-size: .875rem;
+  line-height: 1.8;
+}
+.exam-single-page .exam-promo-gallery__items {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  min-width: 0;
+}
+.exam-single-page .exam-promo-gallery__item {
+  min-width: 0;
+  margin: 0;
+}
+.exam-single-page .exam-promo-gallery__item:first-child { grid-column: 1 / -1; }
+.exam-single-page .exam-promo-gallery__image {
+  display: block;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border: 1px solid var(--alz-border);
+  border-radius: 16px;
+  background: var(--alz-surface-subtle);
+}
+.exam-single-page .exam-promo-gallery__image > img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  max-height: none;
+  margin: 0;
+  object-fit: contain;
+  object-position: center;
+}
+.exam-single-page .exam-promo-gallery__image:focus-visible {
+  outline: 3px solid var(--alz-focus);
+  outline-offset: 3px;
+}
+.exam-single-page .exam-promo-gallery__item > figcaption {
+  margin-top: 6px;
+  color: var(--alz-text-muted);
+  font-size: .8125rem;
+  line-height: 1.8;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 600px) {
+  .exam-single-page .exam-promo-gallery__items { grid-template-columns: minmax(0, 1fr); }
+}
 .course-single-description,
 .course-single-requirements {
   padding: 26px 28px;
   border: 1px solid var(--line);
   border-radius: 24px;
-  background: #fff;
+  background: var(--alz-surface);
   box-shadow: var(--shadow-sm);
 }
 .course-single-description h2,
 .course-single-requirements h2 { margin: 0 0 14px; color: var(--navy); font-size: 1.35rem; }
-.course-single-description { line-height: 2; color: #3c4257; }
+.course-single-description { line-height: 2; color: var(--alz-ink); }
 .course-single-requirements ul { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
-.course-single-requirements li { display: flex; gap: 9px; align-items: flex-start; color: #3c4257; }
-.course-single-requirements li span { color: var(--success, #0a7d55); font-weight: 900; }
+.course-single-requirements li { display: flex; gap: 9px; align-items: flex-start; color: var(--alz-ink); }
+.course-single-requirements li span { color: var(--success, var(--alz-success)); font-weight: 700; }
 .course-single-sidebar { position: sticky; top: 100px; display: grid; gap: 16px; }
 .course-info-card {
   padding: 24px;
   border: 1px solid var(--line);
   border-radius: 24px;
-  background: #fff;
+  background: var(--alz-surface);
   box-shadow: var(--shadow-sm);
 }
-.course-info-price { display:flex; flex-wrap:wrap; align-items:baseline; gap:8px; margin-bottom:16px; color:var(--purple); font-size:1.55rem; font-weight:900; line-height:1.45; }
-.course-info-price del { color:#8793a3; font-size:.58em; font-weight:700; text-decoration-color:#b45b68; text-decoration-thickness:1px; opacity:1; }
-.course-info-price ins { order:-1; color:var(--purple); text-decoration:none; }
+.course-info-price { display:flex; flex-wrap:wrap; align-items:baseline; gap:8px; margin-bottom:16px; color:var(--purple); font-size:1.55rem; font-weight:700; line-height:1.45; font-variant-numeric:tabular-nums; }
+.course-info-price del { color:var(--alz-price-old-color); font-size:.58em; font-weight:700; text-decoration-color:var(--alz-price-old-color); text-decoration-thickness:1px; opacity:1; }
+.course-info-price ins { order:-1; color:var(--alz-price-color); text-decoration:none; }
 .course-info-price .woocommerce-Price-amount { white-space:nowrap; }
 .course-info-rows { display: grid; gap: 13px; margin: 0 0 18px; padding: 0; list-style: none; }
 .course-info-rows li { display: flex; gap: 11px; align-items: flex-start; }
@@ -1465,14 +1564,14 @@ body.alzaherah-login-view .woocommerce #customer_login > .u-column1 {
   margin-bottom: 12px;
   padding: 13px 15px;
   border-radius: 13px;
-  background: #fff4e0;
-  color: #955e0a;
+  background: var(--alz-warning-surface);
+  color: var(--alz-warning-text);
   font-size: .88rem;
   line-height: 1.8;
 }
-.course-status-notice.is-cancelled { background: #fdeaea; color: #b02a2a; }
-.course-status-notice.is-full { background: #eef1f6; color: var(--navy); }
-.course-status-notice.is-ended { background: #eef1f6; color: #344054; }
+.course-status-notice.is-cancelled { background: var(--alz-danger-surface); color: var(--alz-danger); }
+.course-status-notice.is-full { background: var(--alz-surface-tint); color: var(--navy); }
+.course-status-notice.is-ended { background: var(--alz-surface-tint); color: var(--alz-ink); }
 .course-info-cta form.cart { margin: 0; }
 .course-info-cta .button,
 .course-info-cta .single_add_to_cart_button {
@@ -1480,10 +1579,10 @@ body.alzaherah-login-view .woocommerce #customer_login > .u-column1 {
   min-height: 52px;
   border: 0;
   border-radius: 14px;
-  background: linear-gradient(135deg, var(--purple), #7342dc);
-  color: #fff;
-  font-weight: 900;
-  box-shadow: 0 12px 30px rgba(91,44,203,.25);
+  background: var(--alz-gradient-action);
+  color: var(--alz-surface);
+  font-weight: 600;
+  box-shadow: var(--alz-shadow-md);
   cursor: pointer;
 }
 .course-info-cta .quantity { display: none; }
@@ -1508,10 +1607,10 @@ body.alzaherah-login-view .woocommerce #customer_login > .u-column1 {
     align-items: center;
     gap: 13px;
     padding: 17px;
-    border: 1px solid rgba(91, 44, 203, .16);
+    border: 1px solid var(--alz-purple-soft);
     border-radius: 18px;
-    background: #fff;
-    box-shadow: 0 12px 32px rgba(20, 30, 60, .08);
+    background: var(--alz-surface);
+    box-shadow: var(--alz-shadow-md);
   }
   .course-mobile-quick-enroll > div { display: grid; gap: 5px; min-width: 0; }
   .course-mobile-quick-enroll .course-status-badge {
@@ -1524,7 +1623,7 @@ body.alzaherah-login-view .woocommerce #customer_login > .u-column1 {
     font-size: 1.28rem;
     line-height: 1.45;
   }
-  .course-mobile-quick-enroll small { color: #566277; }
+  .course-mobile-quick-enroll small { color: var(--alz-muted); }
   .course-mobile-quick-enroll .btn {
     min-height: 48px;
     padding: 10px 18px;
@@ -1534,8 +1633,8 @@ body.alzaherah-login-view .woocommerce #customer_login > .u-column1 {
     grid-column: 1 / -1;
     padding: 10px 12px;
     border-radius: 11px;
-    background: #f2f4f7;
-    color: #344054;
+    background: var(--alz-surface-tint);
+    color: var(--alz-ink);
     font-size: .82rem;
     line-height: 1.7;
   }
@@ -1553,14 +1652,14 @@ body.alzaherah-login-view .woocommerce #customer_login > .u-column1 {
     gap: 14px;
     min-height: 72px;
     padding: 10px max(14px, env(safe-area-inset-right)) calc(10px + env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left));
-    border-top: 1px solid #dfe4ec;
-    background: rgba(255, 255, 255, .97);
-    box-shadow: 0 -12px 30px rgba(20, 30, 60, .12);
+    border-top: 1px solid var(--alz-line);
+    background: var(--alz-surface);
+    box-shadow: var(--alz-shadow-md);
     backdrop-filter: blur(14px);
   }
   .course-mobile-sticky > div { display: grid; min-width: 0; }
   .course-mobile-sticky strong { color: var(--navy); font-size: 1rem; }
-  .course-mobile-sticky small { color: #566277; font-size: .72rem; }
+  .course-mobile-sticky small { color: var(--alz-muted); font-size: .72rem; }
   .course-mobile-sticky > a {
     display: inline-flex;
     align-items: center;
@@ -1569,17 +1668,22 @@ body.alzaherah-login-view .woocommerce #customer_login > .u-column1 {
     min-height: 48px;
     padding: 9px 16px;
     border-radius: 13px;
-    background: linear-gradient(135deg, var(--purple), #118f98);
-    color: #fff;
-    font-weight: 900;
+    background: var(--alz-gradient-action);
+    color: var(--alz-surface);
+    font-weight: 600;
     text-align: center;
   }
-  .course-mobile-sticky > a.is-disabled { background: #344054; }
+  .course-mobile-sticky > a.is-disabled { background: var(--alz-ink); }
   body.single-product { padding-bottom: calc(76px + env(safe-area-inset-bottom)); }
 }
 
 @media (max-width: 640px) {
   .courses-catalog-grid { grid-template-columns: 1fr; }
+  .alz-training-products-page #training-products-grid:has(> .catalog-course-card:only-child),
+  .alz-training-products-page #training-products-grid:has(> .catalog-course-card:first-child:nth-last-child(2)) {
+    grid-template-columns: minmax(0, 1fr);
+    justify-content: stretch;
+  }
   .alz-training-products-page #training-products-grid > .catalog-course-card:only-child {
     width: 100%;
     max-width: none;
@@ -1608,12 +1712,12 @@ body.alzaherah-login-view .woocommerce #customer_login > .u-column1 {
   padding: 20px 22px;
   border: 1px solid var(--line);
   border-radius: 18px;
-  background: #fff;
+  background: var(--alz-surface);
 }
 .trainee-profile-fieldset legend {
   padding: 0 10px;
   color: var(--navy);
-  font-weight: 900;
+  font-weight: 600;
 }
 .trainee-profile-hint {
   margin: 0 0 14px;
@@ -1626,7 +1730,7 @@ body.alzaherah-login-view .woocommerce #customer_login > .u-column1 {
   padding: 10px 13px;
   border: 1px solid var(--line);
   border-radius: 13px;
-  background: #fff;
+  background: var(--alz-surface);
 }
 
 
@@ -1636,7 +1740,7 @@ body.alzaherah-login-view .woocommerce #customer_login > .u-column1 {
   padding: 24px 26px;
   border: 1px solid var(--line);
   border-radius: 20px;
-  background: #fff;
+  background: var(--alz-surface);
   box-shadow: var(--shadow-sm);
 }
 .account-card-head { margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px solid var(--line); }
@@ -1644,22 +1748,22 @@ body.alzaherah-login-view .woocommerce #customer_login > .u-column1 {
 .account-card-head p { margin: 0; color: var(--muted); font-size: .88rem; line-height: 1.8; }
 .account-fields-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 16px; }
 .account-card .form-row { margin: 0 0 15px; }
-.account-card label { display: block; margin-bottom: 6px; color: var(--navy); font-size: .86rem; font-weight: 800; }
+.account-card label { display: block; margin-bottom: 6px; color: var(--navy); font-size: .86rem; font-weight: 600; }
 .account-card .input-text {
   width: 100%;
   min-height: 50px;
   padding: 10px 13px;
   border: 1px solid var(--line);
   border-radius: 13px;
-  background: #fff;
+  background: var(--alz-surface);
   box-sizing: border-box;
 }
-.account-card .input-text:focus { outline: 0; border-color: var(--purple); box-shadow: 0 0 0 4px rgba(91,44,203,.08); }
+.account-card .input-text:focus { outline: 0; border-color: var(--purple); box-shadow: var(--alz-shadow-md); }
 .account-hint { display: block; margin-top: 5px; color: var(--muted); font-size: .8rem; }
 .account-submit { margin: 6px 0 0; }
 /* مجموعة حقول النواة والبيانات الإضافية داخل البطاقة الأولى تتناسق تلقائيًا */
 .account-card fieldset { margin: 14px 0; padding: 16px 18px; border: 1px dashed var(--line); border-radius: 14px; }
-.account-card fieldset legend { padding: 0 8px; color: var(--navy); font-weight: 900; font-size: .92rem; }
+.account-card fieldset legend { padding: 0 8px; color: var(--navy); font-weight: 600; font-size: .92rem; }
 
 @media (max-width: 640px) {
   .account-fields-grid { grid-template-columns: 1fr; }
@@ -1674,13 +1778,13 @@ body.alzaherah-login-view .woocommerce #customer_login > .u-column1 {
   border-radius: 16px;
 }
 .alz-order-status-alert.is-cancelled {
-  border-color: #efb9c0;
-  background: #fff0f2;
-  color: #8f2431;
+  border-color: var(--alz-action-disabled);
+  background: var(--alz-danger-surface);
+  color: var(--alz-danger-text);
 }
 .alz-order-status-alert h2 {
   margin: 0 0 8px;
-  color: #9f2030;
+  color: var(--alz-danger-text);
   font-size: 1.15rem;
 }
 .alz-order-status-alert p {
@@ -1695,8 +1799,8 @@ body.alzaherah-login-view .woocommerce #customer_login > .u-column1 {
   margin-top: 14px;
 }
 .alz-order-status-alert__actions a:not(.button) {
-  color: #76202b;
-  font-weight: 800;
+  color: var(--alz-danger-text);
+  font-weight: 600;
   direction: ltr;
 }
 
@@ -1711,12 +1815,10 @@ body.alzaherah-login-view .woocommerce #customer_login > .u-column1 {
   width: min(100%, 1000px);
   margin: 0 auto 26px;
   padding: 24px;
-  border: 1px solid rgba(91, 44, 203, .14);
+  border: 1px solid var(--alz-purple-soft);
   border-radius: 24px;
-  background:
-    radial-gradient(circle at 8% 20%, rgba(21, 167, 172, .13), transparent 34%),
-    linear-gradient(135deg, #f9fbff 0%, #f6f1ff 100%);
-  box-shadow: 0 16px 48px rgba(20, 30, 60, .08);
+  background: var(--alz-surface-subtle);
+  box-shadow: var(--alz-shadow-md);
   box-sizing: border-box;
 }
 
@@ -1726,11 +1828,11 @@ body.alzaherah-login-view .woocommerce #customer_login > .u-column1 {
   width: 58px;
   height: 58px;
   border-radius: 18px;
-  background: linear-gradient(135deg, var(--purple), #118f98);
-  color: #fff;
+  background: var(--alz-gradient-action);
+  color: var(--alz-surface);
   font-size: 1.45rem;
-  font-weight: 900;
-  box-shadow: 0 10px 24px rgba(91, 44, 203, .2);
+  font-weight: 700;
+  box-shadow: var(--alz-shadow-md);
 }
 
 .alz-account-gate-copy {
@@ -1740,9 +1842,9 @@ body.alzaherah-login-view .woocommerce #customer_login > .u-column1 {
 .alz-account-gate-kicker {
   display: block;
   margin-bottom: 5px;
-  color: #11848b;
+  color: var(--alz-teal-700);
   font-size: .78rem;
-  font-weight: 900;
+  font-weight: 700;
 }
 
 .woocommerce-account:not(.logged-in) .woocommerce .alz-account-gate h1 {
@@ -1775,19 +1877,19 @@ body.alzaherah-login-view .woocommerce #customer_login > .u-column1 {
   border: 1px solid transparent;
   border-radius: 12px;
   font-size: .86rem;
-  font-weight: 900;
+  font-weight: 600;
   text-align: center;
 }
 
 .alz-account-gate-button.is-primary {
   background: var(--purple);
-  color: #fff;
-  box-shadow: 0 8px 20px rgba(91, 44, 203, .18);
+  color: var(--alz-surface);
+  box-shadow: var(--alz-shadow-md);
 }
 
 .alz-account-gate-button.is-secondary {
-  border-color: rgba(91, 44, 203, .24);
-  background: #fff;
+  border-color: var(--alz-purple-medium);
+  background: var(--alz-surface);
   color: var(--purple);
 }
 
@@ -1812,9 +1914,9 @@ body.alzaherah-login-view .woocommerce #customer_login > .u-column1 {
   position: absolute;
   inset-inline-start: 0;
   top: .12em;
-  color: #0f8b6d;
+  color: var(--alz-success);
   content: "✓";
-  font-weight: 900;
+  font-weight: 700;
 }
 
 @media (max-width: 800px) {
@@ -1826,7 +1928,7 @@ body.alzaherah-login-view .woocommerce #customer_login > .u-column1 {
     grid-column: 1 / -1;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     padding-top: 17px;
-    border-top: 1px solid rgba(91, 44, 203, .12);
+    border-top: 1px solid var(--alz-purple-soft);
   }
 }
 
@@ -1853,7 +1955,7 @@ body.alzaherah-login-view .woocommerce #customer_login > .u-column1 {
     grid-template-columns: 1fr;
     margin-top: 18px;
     padding-top: 16px;
-    border-top: 1px solid rgba(91, 44, 203, .12);
+    border-top: 1px solid var(--alz-purple-soft);
   }
 }
 
@@ -1864,7 +1966,7 @@ body.alzaherah-login-view .woocommerce #customer_login > .u-column1 {
   padding: 24px;
   border: 1px solid var(--line);
   border-radius: 20px;
-  background: #fff;
+  background: var(--alz-surface);
   box-shadow: var(--shadow-sm);
   color: var(--ink);
 }
@@ -1875,35 +1977,35 @@ body.alzaherah-login-view .woocommerce #customer_login > .u-column1 {
 .alz-transfer-instructions > :first-child { margin-top: 0; }
 .alz-transfer-instructions > :last-child { margin-bottom: 0; }
 .alz-bank-accounts { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; }
-.alz-bank-account { margin: 0; padding: 16px; border: 1px solid #dfe6ee; border-radius: 15px; background: #f8fafc; }
+.alz-bank-account { margin: 0; padding: 16px; border: 1px solid var(--alz-line); border-radius: 15px; background: var(--alz-surface-subtle); }
 .alz-bank-account > div,
-.alz-transfer-details > div { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 7px 0; border-bottom: 1px solid #e7ecf1; }
+.alz-transfer-details > div { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 7px 0; border-bottom: 1px solid var(--alz-line); }
 .alz-bank-account > div:last-child,
 .alz-transfer-details > div:last-child { border-bottom: 0; }
 .alz-bank-account dt,
 .alz-transfer-details dt { color: var(--muted); font-size: .82rem; font-weight: 750; }
 .alz-bank-account dd,
-.alz-transfer-details dd { margin: 0; color: var(--navy); font-weight: 850; text-align: left; overflow-wrap: anywhere; }
+.alz-transfer-details dd { margin: 0; color: var(--navy); font-weight: 700; text-align: left; overflow-wrap: anywhere; }
 .alz-bank-account dd[dir="ltr"] { direction: ltr; unicode-bidi: isolate; font-variant-numeric: tabular-nums; }
-.alz-transfer-order-total { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 16px; padding: 14px 16px; border-radius: 13px; color: var(--navy); background: #f1edff; }
+.alz-transfer-order-total { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 16px; padding: 14px 16px; border-radius: 13px; color: var(--navy); background: var(--alz-info-surface); }
 .alz-transfer-order-total strong { color: var(--purple); white-space: nowrap; }
 .alz-transfer-notice { margin: 14px 0; padding: 13px 15px; border-radius: 12px; line-height: 1.8; }
-.alz-transfer-notice.is-success { color: #08744e; background: #e8f8f1; }
-.alz-transfer-notice.is-approved { color: #09664a; background: #e6f7ef; border: 1px solid #bfe8d5; }
-.alz-transfer-notice.is-pending { color: #815706; background: #fff7e3; border: 1px solid #f0d99a; }
-.alz-transfer-notice.is-error { color: #a12626; background: #fff0f0; }
+.alz-transfer-notice.is-success { color: var(--alz-success-text); background: var(--alz-success-surface); }
+.alz-transfer-notice.is-approved { color: var(--alz-success-text); background: var(--alz-success-surface); border: 1px solid var(--alz-action-disabled); }
+.alz-transfer-notice.is-pending { color: var(--alz-warning-text); background: var(--alz-warning-surface); border: 1px solid var(--alz-warning-surface); }
+.alz-transfer-notice.is-error { color: var(--alz-danger-text); background: var(--alz-danger-surface); }
 .alz-transfer-details { margin: 9px 0 0; }
 .alz-transfer-form { margin-top: 20px; padding-top: 4px; border-top: 1px solid var(--line); }
 .alz-transfer-form > p { margin: 0 0 15px; color: var(--muted); font-size: .86rem; }
 .alz-transfer-form-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 13px; }
-.alz-transfer-form label { display: grid; gap: 6px; color: var(--navy); font-size: .84rem; font-weight: 800; }
+.alz-transfer-form label { display: grid; gap: 6px; color: var(--navy); font-size: .84rem; font-weight: 600; }
 .alz-transfer-form input[type="text"],
 .alz-transfer-form input[type="date"],
-.alz-transfer-form input[type="file"] { width: 100%; min-height: 46px; padding: 10px 12px; border: 1px solid #d8e0e9; border-radius: 11px; background: #fff; color: var(--ink); }
-.alz-transfer-form input:focus { border-color: var(--purple); outline: 3px solid rgba(91,44,203,.12); }
+.alz-transfer-form input[type="file"] { width: 100%; min-height: 46px; padding: 10px 12px; border: 1px solid var(--alz-action-disabled); border-radius: 11px; background: var(--alz-surface); color: var(--ink); }
+.alz-transfer-form input:focus { border-color: var(--purple); outline: 3px solid var(--alz-purple-soft); }
 .alz-transfer-file { margin: 13px 0; }
 .alz-transfer-file small { color: var(--muted); font-weight: 500; }
-.alz-transfer-form .button.alt { min-height: 48px; padding-inline: 20px; border: 0; border-radius: 12px; background: var(--purple); color: #fff; font-weight: 900; }
+.alz-transfer-form .button.alt { min-height: 48px; padding-inline: 20px; border: 0; border-radius: 12px; background: var(--purple); color: var(--alz-surface); font-weight: 600; }
 
 @media (max-width: 680px) {
   .alz-transfer-card { padding: 18px 14px; }
@@ -1952,16 +2054,16 @@ body.alzaherah-login-view .woocommerce #customer_login > .u-column1 {
 .alz-checkout-bank-details:not(.alz-bank-layout-v3) .alz-checkout-bank-title { display:block; margin-bottom:6px; color:var(--navy); font-size:1rem; }
 .alz-checkout-bank-details:not(.alz-bank-layout-v3) > p { margin:0 0 13px !important; color:var(--muted); line-height:1.8; }
 .registration-checkout #payment .alz-checkout-bank-details:not(.alz-bank-layout-v3) .alz-bank-accounts { grid-template-columns:1fr; }
-.registration-checkout #payment .alz-checkout-bank-details:not(.alz-bank-layout-v3) .alz-bank-account { background:#f8fafc; }
+.registration-checkout #payment .alz-checkout-bank-details:not(.alz-bank-layout-v3) .alz-bank-account { background:var(--alz-surface-subtle); }
 .registration-checkout #payment .alz-checkout-bank-details:not(.alz-bank-layout-v3) .alz-bank-account dd { color:var(--navy); }
-.alz-checkout-bank-details:not(.alz-bank-layout-v3) .alz-checkout-receipt-field { display:grid; gap:7px; margin-top:16px; color:var(--navy); font-weight:850; }
-.alz-checkout-bank-details:not(.alz-bank-layout-v3) .alz-checkout-receipt-field input[type="file"] { width:100%; padding:11px; border:1px dashed #b9c6d6; border-radius:12px; background:#fff; color:var(--ink); }
+.alz-checkout-bank-details:not(.alz-bank-layout-v3) .alz-checkout-receipt-field { display:grid; gap:7px; margin-top:16px; color:var(--navy); font-weight:700; }
+.alz-checkout-bank-details:not(.alz-bank-layout-v3) .alz-checkout-receipt-field input[type="file"] { width:100%; padding:11px; border:1px dashed var(--alz-action-disabled); border-radius:12px; background:var(--alz-surface); color:var(--ink); }
 .alz-checkout-bank-details:not(.alz-bank-layout-v3) .alz-checkout-receipt-field small { color:var(--muted); font-size:.78rem; font-weight:500; line-height:1.7; }
-.alz-checkout-receipt-status { min-height:0; margin-top:10px; padding:0; border-radius:11px; font-size:.82rem; font-weight:800; }
+.alz-checkout-receipt-status { min-height:0; margin-top:10px; padding:0; border-radius:11px; font-size:.82rem; font-weight:600; }
 .alz-checkout-receipt-status:not(:empty) { padding:10px 12px; }
-.alz-checkout-receipt-status.is-loading { color:#73520b; background:#fff6df; }
-.alz-checkout-receipt-status.is-success { color:#08744e; background:#e8f8f1; }
-.alz-checkout-receipt-status.is-error { color:#a12626; background:#fff0f0; }
+.alz-checkout-receipt-status.is-loading { color:var(--alz-warning-text); background:var(--alz-warning-surface); }
+.alz-checkout-receipt-status.is-success { color:var(--alz-success-text); background:var(--alz-success-surface); }
+.alz-checkout-receipt-status.is-error { color:var(--alz-danger-text); background:var(--alz-danger-surface); }
 .registration-checkout #place_order:disabled { cursor:not-allowed; opacity:.58; box-shadow:none; }
 
 /* مقياس موحّد لصفحات المتجر والتسجيل مع بقية الصفحات الداخلية. */
@@ -1969,7 +2071,7 @@ body.alzaherah-login-view .woocommerce #customer_login > .u-column1 {
 .registration-hero { padding-block:clamp(50px,6vw,64px); }
 .courses-hero h1,
 .registration-hero h1,
-.woocommerce-main div.product .product_title { font-size:clamp(1.95rem,3.5vw,3.05rem); }
+.woocommerce-main div.product .product_title { font-size:clamp(1.75rem, 1.32rem + 1.9vw, 2.75rem); font-weight:700; line-height:1.4; }
 .courses-content { padding-block:clamp(48px,6vw,64px) clamp(68px,8vw,88px); }
 .registration-content { padding-block:clamp(48px,6vw,62px) clamp(68px,8vw,88px); }
 
@@ -1986,10 +2088,13 @@ body.alzaherah-login-view .woocommerce #customer_login > .u-column1 {
    يمنع ظهور رسالة "لم تختر دورة" بعد إفراغ السلة بنجاح.
    ========================================================== */
 .registration-page.is-confirmation .registration-hero {
-  background:
-    radial-gradient(circle at 14% 20%, rgba(16,185,178,.28), transparent 28%),
-    radial-gradient(circle at 88% 18%, rgba(126,87,255,.24), transparent 30%),
-    linear-gradient(135deg, #0d1730, #2f2477 58%, #087f7a);
+  background: var(--alz-gradient-hero);
+}
+.registration-page.is-confirmation .registration-hero :is(h1, .registration-kicker) {
+  color: var(--alz-on-dark);
+}
+.registration-page.is-confirmation .registration-hero p {
+  color: var(--alz-on-dark-muted);
 }
 .registration-confirmation-layout {
   grid-template-columns: minmax(0,1fr) 370px;
@@ -2003,9 +2108,9 @@ body.alzaherah-login-view .woocommerce #customer_login > .u-column1 {
   gap: 16px;
   margin-bottom: 26px;
   padding: 20px;
-  border: 1px solid #cdece6;
+  border: 1px solid var(--alz-action-disabled);
   border-radius: 18px;
-  background: linear-gradient(135deg,#f0fbf8,#f5f1ff);
+  background: var(--alz-surface-subtle);
 }
 .registration-confirmation-icon {
   flex: 0 0 54px;
@@ -2014,11 +2119,22 @@ body.alzaherah-login-view .woocommerce #customer_login > .u-column1 {
   width: 54px;
   height: 54px;
   border-radius: 17px;
-  background: linear-gradient(135deg,var(--teal),var(--purple));
-  color: #fff;
+  background: var(--alz-gradient-action);
+  color: var(--alz-surface);
   font-size: 1.55rem;
-  font-weight: 900;
-  box-shadow: 0 12px 28px rgba(16,185,178,.22);
+  font-weight: 700;
+  box-shadow: var(--alz-shadow-md);
+}
+.registration-confirmation-heading.is-pending .registration-confirmation-icon {
+  background: var(--alz-warning-surface);
+  color: var(--alz-warning-text);
+  box-shadow: none;
+}
+.registration-confirmation-heading.is-failed .registration-confirmation-icon,
+.registration-confirmation-heading.is-invalid .registration-confirmation-icon {
+  background: var(--alz-danger-surface);
+  color: var(--alz-danger-text);
+  box-shadow: none;
 }
 .registration-confirmation-heading h2 {
   margin: 0 0 6px;
@@ -2045,7 +2161,7 @@ body.alzaherah-login-view .woocommerce #customer_login > .u-column1 {
   color: var(--navy);
 }
 .confirmation-order-header span {
-  font-weight: 900;
+  font-weight: 700;
 }
 .confirmation-order-header strong {
   color: var(--purple);
@@ -2058,25 +2174,31 @@ body.alzaherah-login-view .woocommerce #customer_login > .u-column1 {
 .confirmation-status {
   padding: 6px 10px;
   border-radius: 999px;
-  background: #eef1f6;
+  background: var(--alz-surface-tint);
   color: var(--navy);
   font-size: .76rem;
 }
-.confirmation-status.status-processing,
-.confirmation-status.status-completed {
-  background: #e8f8f2;
-  color: #117151;
+.confirmation-status.payment-paid {
+  background: var(--alz-success-surface);
+  color: var(--alz-success-text);
 }
-.confirmation-status.status-on-hold,
-.confirmation-status.status-pending {
-  background: #fff5df;
-  color: #9b6200;
+.confirmation-status.payment-pending {
+  background: var(--alz-warning-surface);
+  color: var(--alz-warning-text);
 }
-.confirmation-status.status-failed,
-.confirmation-status.status-cancelled,
-.confirmation-status.status-refunded {
-  background: #fff0f0;
-  color: #b02a2a;
+.confirmation-status.payment-failed,
+.confirmation-status.payment-invalid {
+  background: var(--alz-danger-surface);
+  color: var(--alz-danger-text);
+}
+.confirmation-order-status-row {
+  margin-top: -7px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--line);
+}
+.confirmation-order-status-row strong {
+  color: var(--navy);
+  font-size: .78rem;
 }
 .confirmation-products {
   padding: 3px 0 2px;
@@ -2140,9 +2262,19 @@ body.alzaherah-login-view .woocommerce #customer_login > .u-column1 {
   margin: 0 0 20px;
   padding: 15px 17px;
   border-radius: 14px;
-  background: #edf9f5;
-  color: #117151;
-  font-weight: 900;
+  background: var(--alz-surface-tint);
+  color: var(--alz-success-text);
+  font-weight: 700;
+}
+.registration-page.is-payment-pending .registration-thankyou-output .woocommerce-order > p:first-child,
+.registration-page.is-payment-pending .registration-thankyou-output .woocommerce-thankyou-order-received {
+  background: var(--alz-warning-surface);
+  color: var(--alz-warning-text);
+}
+.registration-page:is(.is-payment-failed,.is-payment-invalid) .registration-thankyou-output .woocommerce-order > p:first-child,
+.registration-page:is(.is-payment-failed,.is-payment-invalid) .registration-thankyou-output .woocommerce-thankyou-order-received {
+  background: var(--alz-danger-surface);
+  color: var(--alz-danger-text);
 }
 .registration-thankyou-output .woocommerce-order-overview {
   display: grid;
@@ -2206,8 +2338,8 @@ body.alzaherah-login-view .woocommerce #customer_login > .u-column1 {
 .registration-thankyou-output .woocommerce-error {
   padding: 15px 17px;
   border-radius: 14px;
-  background: #fff0f0;
-  color: #b02a2a;
+  background: var(--alz-danger-surface);
+  color: var(--alz-danger);
 }
 
 @media (max-width: 980px) {
@@ -2226,6 +2358,9 @@ body.alzaherah-login-view .woocommerce #customer_login > .u-column1 {
   .registration-confirmation-heading {
     align-items: flex-start;
     padding: 16px;
+  }
+  .registration-page.is-confirmation .registration-hero-inner {
+    gap: 24px;
   }
   .registration-confirmation-icon {
     flex-basis: 46px;
@@ -2259,10 +2394,8 @@ body.woocommerce-account main > .section:first-child,
 body.woocommerce-cart main > .section:first-child {
   position: relative;
   overflow: hidden;
-  padding-block: 40px 36px;
-  background:
-    radial-gradient(circle at 10% 15%, rgba(16,185,178,.13), transparent 30%),
-    linear-gradient(135deg, #f7f8fc, #f2efff 58%, #eefafa);
+  padding-block: var(--alz-space-6) var(--alz-space-4);
+  background: var(--alz-surface-subtle);
 }
 body.woocommerce-account main > .section:first-child::after,
 body.woocommerce-cart main > .section:first-child::after {
@@ -2272,7 +2405,7 @@ body.woocommerce-cart main > .section:first-child::after {
   bottom: -125px;
   width: 220px;
   height: 220px;
-  border: 38px solid rgba(91,44,203,.055);
+  border: 38px solid var(--alz-purple-soft);
   border-radius: 50%;
 }
 body.woocommerce-account main > .section:first-child .section-heading,
@@ -2284,28 +2417,28 @@ body.woocommerce-cart main > .section:first-child .section-title {
 }
 body.woocommerce-account main > .section:nth-child(2),
 body.woocommerce-cart main > .section:nth-child(2) {
-  padding-block: 48px 72px;
-  background: linear-gradient(180deg,#fff,#fbfcff);
+  padding-block: var(--alz-space-4) var(--alz-space-12);
+  background: var(--alz-surface-subtle);
 }
 body.woocommerce-account .page-content,
 body.woocommerce-cart .page-content {
   width: 100%;
-  max-width: 1180px;
+  max-width: none;
 }
 
 /* لوحة الحساب: مساحة عملية، قائمة واضحة وبطاقات متناسقة. */
 .woocommerce-account.logged-in .woocommerce,
 .woocommerce:has(> .woocommerce-MyAccount-navigation) {
-  grid-template-columns: 238px minmax(0,1fr);
-  gap: 24px 30px;
+  grid-template-columns: minmax(13.75rem, 16.25rem) minmax(0, 1fr);
+  gap: var(--alz-space-6);
 }
 .woocommerce-account .woocommerce-MyAccount-navigation { top: 104px; }
 .woocommerce-account .woocommerce-MyAccount-navigation ul {
   padding: 9px;
-  border-color: rgba(20,33,61,.09);
-  border-radius: 22px;
-  background: #fff;
-  box-shadow: 0 18px 48px rgba(20,33,61,.08);
+  border-color: var(--alz-border);
+  border-radius: var(--alz-radius-md);
+  background: var(--alz-surface);
+  box-shadow: none;
 }
 .woocommerce-account .woocommerce-MyAccount-navigation li { margin: 0; }
 .woocommerce-account .woocommerce-MyAccount-navigation a {
@@ -2317,7 +2450,7 @@ body.woocommerce-cart .page-content {
   padding: 10px 13px;
   border: 0;
   border-radius: 13px;
-  color: #344054;
+  color: var(--alz-ink);
   font-size: .9rem;
   transition: background .18s ease, color .18s ease, transform .18s ease;
 }
@@ -2326,31 +2459,54 @@ body.woocommerce-cart .page-content {
   flex: 0 0 9px;
   width: 9px;
   height: 9px;
-  border: 2px solid #b8c1cf;
+  border: 2px solid var(--alz-action-disabled);
   border-radius: 50%;
 }
 .woocommerce-account .woocommerce-MyAccount-navigation a:hover {
-  background: #f8f7ff;
+  background: var(--alz-surface-subtle);
   color: var(--purple);
   transform: translateX(-2px);
 }
 .woocommerce-account .woocommerce-MyAccount-navigation .is-active a {
-  background: linear-gradient(135deg,var(--purple),#7040d8 62%,#238c9c);
-  color: #fff;
-  box-shadow: 0 10px 24px rgba(91,44,203,.22);
+  background: var(--alz-gradient-action);
+  color: var(--alz-surface);
+  box-shadow: var(--alz-shadow-md);
 }
 .woocommerce-account .woocommerce-MyAccount-navigation .is-active a::before {
-  border-color: #fff;
-  background: #fff;
-  box-shadow: 0 0 0 4px rgba(255,255,255,.16);
+  border-color: var(--alz-surface);
+  background: var(--alz-surface);
+  box-shadow: var(--alz-shadow-md);
 }
 .woocommerce-account .woocommerce-MyAccount-content {
-  min-height: 420px;
-  padding: 30px;
-  border: 1px solid rgba(20,33,61,.08);
-  border-radius: 26px;
-  background: #fff;
-  box-shadow: 0 22px 60px rgba(20,33,61,.075);
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.alz-account-endpoint-intro {
+  display: grid;
+  gap: var(--alz-space-2);
+  margin: 0 0 var(--alz-space-6);
+  padding: 0 0 var(--alz-space-4);
+  border-bottom: 1px solid var(--alz-line);
+}
+.alz-account-endpoint-intro > span {
+  color: var(--purple);
+  font-size: .76rem;
+  font-weight: 700;
+}
+.alz-account-endpoint-intro h2 {
+  margin: 0;
+  color: var(--navy);
+  font-size: clamp(1.35rem,2.6vw,1.8rem);
+}
+.alz-account-endpoint-intro p {
+  max-width: none;
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.85;
 }
 
 .trainee-dashboard { gap: 24px; }
@@ -2359,10 +2515,8 @@ body.woocommerce-cart .page-content {
   overflow: hidden;
   padding: 26px 28px;
   border-radius: 21px;
-  background:
-    radial-gradient(circle at 5% 0, rgba(16,185,178,.3), transparent 32%),
-    linear-gradient(135deg,var(--navy-2),#34207d 60%,#087f7a);
-  color: #fff;
+  background: var(--alz-gradient-hero);
+  color: var(--alz-surface);
 }
 .trainee-welcome::after {
   content: "";
@@ -2371,19 +2525,19 @@ body.woocommerce-cart .page-content {
   bottom: -75px;
   width: 150px;
   height: 150px;
-  border: 25px solid rgba(255,255,255,.06);
+  border: 25px solid var(--alz-on-dark-soft);
   border-radius: 50%;
 }
-.trainee-welcome h2 { position: relative; z-index: 1; color: #fff; font-size: clamp(1.45rem,3vw,2rem); }
-.trainee-welcome p { position: relative; z-index: 1; max-width: 680px; color: rgba(255,255,255,.76); }
+.trainee-welcome h2 { position: relative; z-index: 1; color: var(--alz-surface); font-size: clamp(1.45rem,3vw,2rem); }
+.trainee-welcome p { position: relative; z-index: 1; max-width: 680px; color: var(--alz-on-dark-muted); }
 .trainee-stats { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 16px; }
 .trainee-stat {
   position: relative;
   overflow: hidden;
   padding: 21px 22px;
-  border-color: rgba(91,44,203,.12);
+  border-color: var(--alz-purple-soft);
   border-radius: 18px;
-  background: linear-gradient(145deg,#fff,#faf9ff);
+  background: var(--alz-surface-subtle);
 }
 .trainee-stat::before {
   content: "";
@@ -2391,17 +2545,18 @@ body.woocommerce-cart .page-content {
   inset-block: 0;
   inset-inline-start: 0;
   width: 4px;
-  background: linear-gradient(var(--purple),var(--teal));
+  background: var(--alz-gradient-action);
 }
 .trainee-stat strong { color: var(--purple); font-size: 2rem; }
-.trainee-recent { border-radius: 20px; box-shadow: 0 10px 30px rgba(20,33,61,.045); }
-.trainee-recent-head { padding: 17px 20px; background: #fbfcff; }
+.trainee-recent { border-radius: 20px; box-shadow: var(--alz-shadow-md); }
+.trainee-recent-head { padding: 17px 20px; background: var(--alz-surface); }
 .trainee-order { min-height: 70px; padding: 15px 20px; }
 .trainee-actions { padding-top: 2px; }
 .trainee-actions .btn { min-height: 48px; }
 
 /* الجداول: عرض مريح للأوامر مع تباين وارتكاز رقمي واضح. */
-.woocommerce-account .woocommerce-orders-table {
+.woocommerce-account .woocommerce-orders-table,
+.woocommerce-account .woocommerce-table--order-downloads {
   overflow: hidden;
   width: 100%;
   margin: 0;
@@ -2409,20 +2564,25 @@ body.woocommerce-cart .page-content {
   border-radius: 18px;
   border-collapse: separate;
   border-spacing: 0;
-  background: #fff;
+  background: var(--alz-surface);
 }
-.woocommerce-account .woocommerce-orders-table thead { background: linear-gradient(135deg,#f7f5ff,#effafa); }
+.woocommerce-account .woocommerce-orders-table thead,
+.woocommerce-account .woocommerce-table--order-downloads thead { background: var(--alz-surface-subtle); }
 .woocommerce-account .woocommerce-orders-table th,
-.woocommerce-account .woocommerce-orders-table td {
+.woocommerce-account .woocommerce-orders-table td,
+.woocommerce-account .woocommerce-table--order-downloads th,
+.woocommerce-account .woocommerce-table--order-downloads td {
   padding: 15px 14px;
   border-width: 0 0 1px;
-  border-color: #edf0f5;
+  border-color: var(--alz-info-surface);
   text-align: right;
   vertical-align: middle;
 }
-.woocommerce-account .woocommerce-orders-table tbody tr:last-child td { border-bottom: 0; }
-.woocommerce-account .woocommerce-orders-table tbody tr:hover { background: #fcfbff; }
-.woocommerce-account .woocommerce-orders-table .button {
+.woocommerce-account .woocommerce-orders-table tbody tr:last-child :is(th,td),
+.woocommerce-account .woocommerce-table--order-downloads tbody tr:last-child :is(th,td) { border-bottom: 0; }
+.woocommerce-account .woocommerce-orders-table tbody tr:hover { background: var(--alz-surface); }
+.woocommerce-account .woocommerce-orders-table .button,
+.woocommerce-account .woocommerce-table--order-downloads .button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -2431,15 +2591,42 @@ body.woocommerce-cart .page-content {
   border-radius: 11px;
   font-size: .8rem;
 }
+.woocommerce-account .woocommerce-table--order-downloads .download-product a {
+  color: var(--navy);
+  font-weight: 600;
+}
+.woocommerce-account .woocommerce-table--order-downloads .download-file {
+  font-size: var(--alz-font-size-sm);
+}
+.woocommerce-account .woocommerce-table--order-downloads .download-file .button {
+  white-space: nowrap;
+}
+
+/* The lost-password endpoint is a single, deliberate card rather than Woo's narrow default. */
+.woocommerce-account:not(.logged-in) .woocommerce form.woocommerce-ResetPassword {
+  width: 100%;
+  max-width: 680px;
+  margin: 0 auto;
+  padding: clamp(22px,4vw,34px);
+  border: 1px solid var(--alz-line);
+  border-radius: 24px;
+  background: var(--alz-surface);
+  box-shadow: var(--alz-shadow-md);
+}
+.woocommerce-account:not(.logged-in) .woocommerce form.woocommerce-ResetPassword > p:first-child {
+  margin-top: 0;
+  color: var(--muted);
+  line-height: 1.85;
+}
 
 /* بيانات الحساب والأمان: حقول حديثة ومسافات أقصر. */
 .account-sections { gap: 22px; }
 .account-security-sections { grid-template-columns: repeat(2,minmax(0,1fr)); align-items: start; }
 .account-card {
-  padding: 28px;
-  border-color: rgba(20,33,61,.09);
-  border-radius: 22px;
-  box-shadow: 0 12px 36px rgba(20,33,61,.055);
+  padding: var(--alz-space-6);
+  border-color: var(--alz-border);
+  border-radius: var(--alz-radius-md);
+  box-shadow: none;
 }
 .account-card-head {
   position: relative;
@@ -2453,7 +2640,7 @@ body.woocommerce-cart .page-content {
   inset-inline-start: 0;
   width: 4px;
   border-radius: 10px;
-  background: linear-gradient(var(--purple),var(--teal));
+  background: var(--alz-gradient-action);
 }
 .account-card-head h2 { font-size: 1.3rem; }
 .account-fields-grid { gap: 0 18px; }
@@ -2463,17 +2650,17 @@ body.woocommerce-cart .page-content {
 .account-card select.input-text {
   min-height: 52px;
   padding: 11px 14px;
-  border-color: #d9e0e9;
-  background: #fbfcff;
+  border-color: var(--alz-action-disabled);
+  background: var(--alz-surface);
 }
-.account-card .input-text:hover { border-color: #bac5d3; }
+.account-card .input-text:hover { border-color: var(--alz-action-disabled); }
 .account-card fieldset,
 .trainee-profile-fieldset {
   margin: 20px 0 8px;
   padding: 20px;
-  border: 1px solid #dfe4ec;
+  border: 1px solid var(--alz-line);
   border-radius: 18px;
-  background: #fbfcff;
+  background: var(--alz-surface);
 }
 .account-card .alz-account-extra,
 .account-card .trainee-profile-fieldset {
@@ -2494,9 +2681,9 @@ body.woocommerce-cart .page-content {
   position: relative;
   overflow: hidden;
   padding: 34px;
-  border-color: rgba(91,44,203,.11);
+  border-color: var(--alz-purple-soft);
   border-radius: 28px;
-  box-shadow: 0 24px 64px rgba(20,33,61,.085);
+  box-shadow: var(--alz-shadow-md);
 }
 .registration-checkout-card::before {
   content: "";
@@ -2504,24 +2691,24 @@ body.woocommerce-cart .page-content {
   inset-block-start: 0;
   inset-inline: 0;
   height: 5px;
-  background: linear-gradient(90deg,var(--purple),#7040d8,var(--teal));
+  background: var(--alz-gradient-action);
 }
 .registration-checkout .alz-checkout-profile-summary {
-  border-color: rgba(16,185,178,.22);
+  border-color: var(--alz-teal-medium);
   border-radius: 17px;
-  background: linear-gradient(145deg,#f8ffff,#f7f4ff);
+  background: var(--alz-surface-subtle);
 }
 .registration-checkout #order_review { display: grid; gap: 20px; }
 .registration-checkout table.shop_table {
   border-radius: 18px;
-  box-shadow: 0 8px 24px rgba(20,33,61,.04);
+  box-shadow: var(--alz-shadow-md);
 }
-.registration-checkout table.shop_table thead { background: linear-gradient(135deg,#f7f5ff,#effafa); }
+.registration-checkout table.shop_table thead { background: var(--alz-surface-subtle); }
 .registration-checkout #payment {
   overflow: hidden;
-  border: 1px solid #e2e6ef;
+  border: 1px solid var(--alz-line);
   border-radius: 20px;
-  background: #fbfcff;
+  background: var(--alz-surface);
 }
 .registration-checkout #payment ul.payment_methods {
   display: grid;
@@ -2531,32 +2718,32 @@ body.woocommerce-cart .page-content {
 .registration-checkout #payment ul.payment_methods > li {
   margin: 0;
   padding: 16px;
-  border: 1px solid #e1e6ee;
+  border: 1px solid var(--alz-line);
   border-radius: 16px;
-  background: #fff;
+  background: var(--alz-surface);
 }
 .registration-checkout #payment ul.payment_methods > li:has(input:checked) {
-  border-color: rgba(91,44,203,.45);
-  box-shadow: 0 0 0 4px rgba(91,44,203,.07);
+  border-color: var(--alz-purple-medium);
+  box-shadow: var(--alz-shadow-md);
 }
 .registration-checkout #payment div.payment_box {
   margin: 13px 0 0;
   padding: 18px;
-  background: #f8fafc;
+  background: var(--alz-surface-subtle);
 }
 .registration-checkout #payment div.form-row {
   margin: 0;
   padding: 20px;
-  border-top: 1px solid #e7e9f1;
-  background: #fff;
+  border-top: 1px solid var(--alz-line);
+  background: var(--alz-surface);
 }
 .registration-checkout #place_order {
   min-height: 58px;
   font-size: 1rem;
-  box-shadow: 0 14px 34px rgba(91,44,203,.24);
+  box-shadow: var(--alz-shadow-md);
 }
 .registration-checkout #place_order:hover {
-  background: linear-gradient(135deg,var(--purple-dark),#5c38bd);
+  background: var(--alz-gradient-action);
   transform: translateY(-1px);
 }
 .alz-checkout-bank-details:not(.alz-bank-layout-v3) {
@@ -2569,16 +2756,16 @@ body.woocommerce-cart .page-content {
 .alz-checkout-bank-details:not(.alz-bank-layout-v3) > p,
 .alz-checkout-bank-details:not(.alz-bank-layout-v3) > .alz-checkout-receipt-status { grid-column: 1 / -1; }
 .registration-checkout #payment .alz-checkout-bank-details:not(.alz-bank-layout-v3) .alz-bank-account {
-  border-color: #dce4ed;
-  background: #fff;
+  border-color: var(--alz-action-disabled);
+  background: var(--alz-surface);
 }
 .alz-checkout-bank-details:not(.alz-bank-layout-v3) .alz-checkout-receipt-field {
   align-content: start;
   margin-top: 0;
   padding: 15px;
-  border: 1px dashed #bcc9d8;
+  border: 1px dashed var(--alz-action-disabled);
   border-radius: 14px;
-  background: #fff;
+  background: var(--alz-surface);
 }
 
 /* السلة التقليدية المتوافقة مع وظائف المنصة. */
@@ -2598,18 +2785,18 @@ body.woocommerce-cart .page-content {
   margin: 0;
   border: 1px solid var(--line);
   border-radius: 22px;
-  background: #fff;
-  box-shadow: 0 18px 48px rgba(20,33,61,.07);
+  background: var(--alz-surface);
+  box-shadow: var(--alz-shadow-md);
 }
 .woocommerce-cart .cart-collaterals { grid-area: summary; width: 100%; }
 .woocommerce-cart .cart-collaterals .cart_totals {
   float: none;
   width: 100%;
   padding: 24px;
-  border: 1px solid rgba(91,44,203,.12);
+  border: 1px solid var(--alz-purple-soft);
   border-radius: 22px;
-  background: linear-gradient(145deg,#fff,#f8f6ff);
-  box-shadow: 0 18px 48px rgba(20,33,61,.07);
+  background: var(--alz-surface-subtle);
+  box-shadow: var(--alz-shadow-md);
 }
 .woocommerce-cart .cart_totals h2 { margin: 0 0 18px; color: var(--navy); font-size: 1.3rem; }
 .woocommerce-cart table.shop_table {
@@ -2622,16 +2809,16 @@ body.woocommerce-cart .page-content {
 .woocommerce-cart table.shop_table th,
 .woocommerce-cart table.shop_table td {
   padding: 16px;
-  border-color: #edf0f5;
+  border-color: var(--alz-info-surface);
 }
-.woocommerce-cart table.shop_table thead { background: linear-gradient(135deg,#f7f5ff,#effafa); }
+.woocommerce-cart table.shop_table thead { background: var(--alz-surface-subtle); }
 .woocommerce-cart .product-thumbnail img { width: 72px; border-radius: 13px; }
-.woocommerce-cart .product-name a { color: var(--navy); font-weight: 850; }
+.woocommerce-cart .product-name a { color: var(--navy); font-weight: 600; }
 .woocommerce-cart .coupon { display: flex; gap: 9px; }
 .woocommerce-cart .coupon .input-text {
   min-width: 160px;
   min-height: 45px;
-  border: 1px solid #d9e0e9;
+  border: 1px solid var(--alz-action-disabled);
   border-radius: 11px;
 }
 .woocommerce-cart .button { min-height: 45px; border-radius: 11px; }
@@ -2639,9 +2826,9 @@ body.woocommerce-cart .page-content {
   min-height: 56px;
   margin: 18px 0 0;
   border-radius: 14px;
-  background: linear-gradient(135deg,var(--purple),#7040d8 65%,#168d98);
+  background: var(--alz-gradient-action);
   font-size: 1rem;
-  box-shadow: 0 14px 32px rgba(91,44,203,.22);
+  box-shadow: var(--alz-shadow-md);
 }
 
 @media (max-width: 980px) {
@@ -2657,7 +2844,14 @@ body.woocommerce-cart .page-content {
 
 @media (max-width: 900px) {
   .woocommerce-account.logged-in .woocommerce,
-  .woocommerce:has(> .woocommerce-MyAccount-navigation) { gap: 18px; }
+  .woocommerce:has(> .woocommerce-MyAccount-navigation) {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "notices"
+      "nav"
+      "content";
+    gap: var(--alz-space-4);
+  }
   .woocommerce-account .woocommerce-MyAccount-navigation { position: static; overflow-x: auto; }
   .woocommerce-account .woocommerce-MyAccount-navigation ul {
     display: flex;
@@ -2673,7 +2867,7 @@ body.woocommerce-cart .page-content {
     padding: 8px 12px;
     white-space: nowrap;
   }
-  .woocommerce-account .woocommerce-MyAccount-content { padding: 24px; border-radius: 22px; }
+  .woocommerce-account .woocommerce-MyAccount-content { padding: 0; border-radius: 0; }
 }
 
 @media (max-width: 680px) {
@@ -2683,8 +2877,8 @@ body.woocommerce-cart .page-content {
   body.woocommerce-cart main > .section:nth-child(2) { padding-block: 30px 52px; }
   .woocommerce-account .woocommerce-MyAccount-content {
     min-height: 0;
-    padding: 18px 15px;
-    border-radius: 18px;
+    padding: 0;
+    border-radius: 0;
   }
   .trainee-welcome { padding: 21px 18px; border-radius: 18px; }
   .trainee-stats { grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -2712,8 +2906,8 @@ body.woocommerce-cart .page-content {
     padding: 12px;
     border: 1px solid var(--line);
     border-radius: 16px;
-    background: #fff;
-    box-shadow: 0 8px 24px rgba(20,33,61,.05);
+    background: var(--alz-surface);
+    box-shadow: var(--alz-shadow-md);
   }
   .woocommerce-cart table.shop_table_responsive td {
     display: flex;
@@ -2721,10 +2915,10 @@ body.woocommerce-cart .page-content {
     justify-content: space-between;
     gap: 14px;
     padding: 10px 6px;
-    border-bottom: 1px solid #edf0f5;
+    border-bottom: 1px solid var(--alz-info-surface);
     text-align: left !important;
   }
-  .woocommerce-cart table.shop_table_responsive td::before { color: var(--muted); font-weight: 800; }
+  .woocommerce-cart table.shop_table_responsive td::before { color: var(--muted); font-weight: 700; }
   .woocommerce-cart table.shop_table_responsive td.product-thumbnail { display: none; }
   .woocommerce-cart table.shop_table_responsive td.actions { display: block; border: 0; }
   .woocommerce-cart .coupon { display: grid; grid-template-columns: 1fr auto; }
@@ -2732,35 +2926,48 @@ body.woocommerce-cart .page-content {
   .woocommerce-cart .cart-collaterals .cart_totals { padding: 20px 16px; border-radius: 18px; }
 
   .woocommerce-account .woocommerce-orders-table,
+  .woocommerce-account .woocommerce-table--order-downloads,
   .woocommerce-account .woocommerce-orders-table tbody,
+  .woocommerce-account .woocommerce-table--order-downloads tbody,
   .woocommerce-account .woocommerce-orders-table tr,
-  .woocommerce-account .woocommerce-orders-table td { display: block; width: 100%; }
-  .woocommerce-account .woocommerce-orders-table thead { display: none; }
-  .woocommerce-account .woocommerce-orders-table {
+  .woocommerce-account .woocommerce-table--order-downloads tr,
+  .woocommerce-account .woocommerce-orders-table th,
+  .woocommerce-account .woocommerce-orders-table td,
+  .woocommerce-account .woocommerce-table--order-downloads th,
+  .woocommerce-account .woocommerce-table--order-downloads td { display: block; width: 100%; }
+  .woocommerce-account .woocommerce-orders-table thead,
+  .woocommerce-account .woocommerce-table--order-downloads thead { display: none; }
+  .woocommerce-account .woocommerce-orders-table,
+  .woocommerce-account .woocommerce-table--order-downloads {
     overflow: visible;
     border: 0;
     background: transparent;
   }
-  .woocommerce-account .woocommerce-orders-table tr {
+  .woocommerce-account .woocommerce-orders-table tr,
+  .woocommerce-account .woocommerce-table--order-downloads tr {
     margin-bottom: 13px;
     padding: 12px 14px;
     border: 1px solid var(--line);
     border-radius: 16px;
-    background: #fff;
+    background: var(--alz-surface);
   }
-  .woocommerce-account .woocommerce-orders-table td {
+  .woocommerce-account .woocommerce-orders-table :is(th,td),
+  .woocommerce-account .woocommerce-table--order-downloads :is(th,td) {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 15px;
     padding: 10px 0;
-    border-bottom: 1px solid #edf0f5;
+    border-bottom: 1px solid var(--alz-info-surface);
     text-align: left !important;
   }
-  .woocommerce-account .woocommerce-orders-table td:last-child { border-bottom: 0; }
-  .woocommerce-account .woocommerce-orders-table td::before {
+  .woocommerce-account .woocommerce-orders-table :is(th,td):last-child,
+  .woocommerce-account .woocommerce-table--order-downloads :is(th,td):last-child { border-bottom: 0; }
+  .woocommerce-account .woocommerce-orders-table :is(th,td)::before,
+  .woocommerce-account .woocommerce-table--order-downloads :is(th,td)::before {
+	content: attr(data-title);
     color: var(--muted);
-    font-weight: 800;
+    font-weight: 700;
     text-align: right;
   }
 }
@@ -2775,17 +2982,17 @@ body.woocommerce-cart .page-content {
   flex: 0 0 26px;
   width: 26px;
   height: 26px;
-  border: 1px solid rgba(201,255,249,.44);
+  border: 1px solid var(--alz-on-dark-subtle);
   border-radius: 50%;
-  background: rgba(19,155,145,.30);
-  box-shadow: 0 0 0 4px rgba(128,255,247,.07);
+  background: var(--alz-teal-medium);
+  box-shadow: var(--alz-shadow-md);
 }
 .registration-kicker-icon::before,
 .registration-kicker-icon::after {
   position: absolute;
   height: 2px;
   border-radius: 2px;
-  background: #fff;
+  background: var(--alz-surface);
   content: "";
   transform-origin: left center;
 }
@@ -2822,21 +3029,21 @@ body.woocommerce-cart .page-content {
   width: 34px;
   height: 34px;
   place-items: center;
-  border: 1px solid rgba(255,255,255,.26);
+  border: 1px solid var(--alz-on-dark-subtle);
   border-radius: 50%;
-  background: rgba(255,255,255,.07);
+  background: var(--alz-on-dark-soft);
   line-height: 1;
 }
-.registration-step.is-current { border-color: rgba(255,255,255,.13); background: rgba(255,255,255,.13); }
+.registration-step.is-current { border-color: var(--alz-on-dark-subtle); background: var(--alz-on-dark-subtle); }
 .registration-step.is-current .registration-step-indicator {
-  border-color: #fff;
-  background: #fff;
+  border-color: var(--alz-surface);
+  background: var(--alz-surface);
   color: var(--purple);
-  box-shadow: 0 0 0 4px rgba(255,255,255,.09);
+  box-shadow: var(--alz-shadow-md);
 }
 .registration-step.is-complete .registration-step-indicator {
-  border-color: rgba(201,255,249,.54);
-  background: rgba(20,166,155,.38);
+  border-color: var(--alz-on-dark-muted);
+  background: var(--alz-teal-medium);
   color: transparent;
 }
 .registration-step.is-complete .registration-step-indicator bdi { opacity: 0; }
@@ -2845,7 +3052,7 @@ body.woocommerce-cart .page-content {
   position: absolute;
   height: 2px;
   border-radius: 2px;
-  background: #d8fffb;
+  background: var(--alz-info-surface);
   content: "";
   transform-origin: left center;
 }
@@ -2855,5 +3062,431 @@ body.woocommerce-cart .page-content {
 @media (max-width: 480px) {
   .registration-progress { padding: 10px 14px; }
   .registration-progress-list { display: none; }
-  .registration-progress-compact { display: block; color: #fff; font-size: .86rem; font-weight: 850; text-align: center; }
+  .registration-progress-compact { display: block; color: var(--alz-surface); font-size: .86rem; font-weight: 700; text-align: center; }
+}
+
+/* ===== Digital product + qty + cart redesign (4.8.5) ===== */
+.alz-qty {
+  display: inline-grid;
+  grid-template-columns: 44px 52px 44px;
+  align-items: center;
+  gap: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--alz-surface);
+}
+.alz-qty__btn {
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 0;
+  background: var(--alz-surface-subtle);
+  color: var(--navy);
+  font-size: 1.15rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.alz-qty__btn:hover { background: #edeff6; }
+.alz-qty__btn:focus-visible { outline: 3px solid var(--alz-purple-medium); outline-offset: -3px; }
+.alz-qty__input {
+  width: 52px;
+  min-width: 0;
+  min-height: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: #fff;
+  color: var(--navy);
+  text-align: center;
+  font-weight: 700;
+}
+.alz-qty__input::-webkit-outer-spin-button,
+.alz-qty__input::-webkit-inner-spin-button { -webkit-appearance:none; margin:0; }
+.alz-qty__input[type=number] { -moz-appearance:textfield; appearance:textfield; }
+
+.alz-digital-product__crumbs {
+  display:flex; flex-wrap:wrap; gap:8px; align-items:center;
+  padding:18px 0 8px; color:var(--muted); font-size:.92rem;
+}
+.alz-digital-product__crumbs a { color:var(--purple); font-weight:700; text-decoration:none; }
+.alz-digital-product .woocommerce-notices-wrapper {
+  grid-column: 1 / -1;
+  width: 100%;
+}
+.alz-digital-product .woocommerce-notices-wrapper:empty { display: none; }
+.alz-digital-product__card {
+  display:grid; grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);
+  grid-template-areas:
+    "notices notices"
+    "gallery info";
+  gap:28px; align-items:start; padding:22px; border:1px solid var(--line);
+  border-radius:24px; background: var(--alz-surface-subtle); box-shadow:var(--shadow-md);
+}
+.alz-digital-product__card > .woocommerce-notices-wrapper { grid-area: notices; }
+.alz-digital-product__gallery { grid-area: gallery; min-width: 0; }
+.alz-digital-product__info { grid-area: info; min-width: 0; }
+.alz-digital-product__figure {
+  position:relative; aspect-ratio:4/3; overflow:hidden; border-radius:18px;
+  background:var(--surface-2); margin:0;
+}
+.alz-digital-product__img { width:100%; height:100%; object-fit:contain; display:block; }
+.alz-digital-product__zoom {
+  position:absolute; inset-inline-start:12px; inset-block-end:12px;
+  min-height:40px; padding:0 14px; border:0; border-radius:999px;
+  background:var(--alz-scrim); color:var(--alz-surface); font-weight:700; cursor:pointer;
+}
+.alz-digital-product__zoom:focus-visible { outline:3px solid var(--alz-surface); outline-offset:2px; }
+.alz-digital-product__badge {
+  display:inline-flex; margin-bottom:8px; padding:6px 12px; border-radius:999px;
+  background:var(--alz-teal-soft); color:var(--teal-dark); font-weight:600; font-size:.82rem;
+}
+.alz-digital-product__title { margin:0 0 10px; color:var(--navy); font-size:clamp(1.5rem,2.4vw,2rem); line-height:1.25; }
+.alz-digital-product__excerpt { color:var(--muted); margin:0 0 16px; }
+.alz-digital-product__price { display:flex; flex-wrap:wrap; gap:10px; align-items:baseline; margin-bottom:14px; }
+.alz-digital-product__regular { color:var(--muted); font-size:1rem; }
+.alz-digital-product__sale { color:var(--navy); font-size:1.55rem; font-weight:700; text-decoration:none; }
+.alz-digital-product__discount {
+  padding:4px 10px; border-radius:999px; background:var(--alz-purple-soft); color:var(--purple); font-weight:700; font-size:.85rem;
+}
+.alz-digital-product__perks { margin:0 0 18px; padding:0; list-style:none; display:grid; gap:8px; }
+.alz-digital-product__perks li {
+  position:relative; padding-inline-start:22px; color:var(--ink); font-weight:650;
+}
+.alz-digital-product__perks li::before { content:"✓"; position:absolute; inset-inline-start:0; color:var(--teal-dark); font-weight:700; }
+.alz-digital-product__cta .quantity { display:inline-grid !important; margin-inline-end:10px; }
+.alz-digital-product__cta .single_add_to_cart_button {
+  min-height:52px; padding:0 22px; border:0; border-radius:14px;
+  background: var(--alz-gradient-action); color:var(--alz-surface); font-weight:600;
+}
+.alz-digital-product__sections { display:grid; gap:12px; max-width:920px; }
+.alz-accordion {
+  border:1px solid var(--line); border-radius:16px; background:var(--alz-surface); padding:4px 16px;
+}
+.alz-accordion summary {
+  cursor:pointer; font-weight:700; color:var(--navy); padding:14px 0; list-style:none;
+}
+.alz-accordion summary::-webkit-details-marker { display:none; }
+.alz-accordion__body { padding:0 0 16px; color:var(--ink); }
+.alz-lightbox { border:0; border-radius:18px; padding:12px; max-width:min(920px,94vw); }
+.alz-lightbox::backdrop { background:var(--alz-scrim); }
+.alz-lightbox__stage img { max-width:100%; height:auto; display:block; }
+
+/* When Alzaherah cart shell is present, disable legacy WC cart/summary grid-areas. */
+.woocommerce-cart .woocommerce:has(.alz-cart) {
+  display: block;
+  grid-template-columns: none;
+  grid-template-areas: none;
+}
+.woocommerce-cart .woocommerce:has(.alz-cart) > .woocommerce-notices-wrapper:empty { display: none; }
+.woocommerce-cart .woocommerce:has(.alz-cart) .woocommerce-cart-form,
+.woocommerce-cart .woocommerce:has(.alz-cart) .cart-collaterals {
+  grid-area: auto;
+  float: none;
+  width: auto;
+}
+.alz-cart {
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 340px;
+  grid-template-areas: "items summary";
+  gap:24px;
+  align-items:start;
+}
+.alz-cart__form {
+  grid-area: items;
+  margin:0; padding:0; border:1px solid var(--line); border-radius:22px; background:var(--alz-surface);
+  box-shadow: var(--alz-shadow-md); overflow:hidden;
+}
+.alz-cart__row {
+  display:grid; grid-template-columns:88px minmax(0,1fr) auto auto auto;
+  gap:14px; align-items:center; padding:16px; border-bottom:1px solid var(--alz-info-surface);
+}
+.alz-cart__row.is-updating { opacity:.72; pointer-events:none; }
+.alz-cart__thumb img { width:72px; height:72px; object-fit:cover; border-radius:14px; }
+.alz-cart__name { margin:0 0 4px; font-size:1.05rem; }
+.alz-cart__name a { color:var(--navy); text-decoration:none; font-weight:600; }
+.alz-cart__kind { display:inline-block; margin-bottom:6px; color:var(--teal-dark); font-size:.8rem; font-weight:700; }
+.alz-cart__prices del { color:var(--muted); margin-inline-end:6px; }
+.alz-cart__prices ins { text-decoration:none; font-weight:700; color:var(--navy); }
+.alz-cart__status { display:block; min-height:1.2em; font-size:.8rem; color:var(--muted); }
+.alz-cart__line-total { font-weight:700; color:var(--navy); white-space:nowrap; }
+.alz-cart__remove-btn {
+  display:inline-flex; width:40px; height:40px; align-items:center; justify-content:center;
+  border-radius:12px; border:1px solid var(--line); color:var(--navy); text-decoration:none; font-size:1.3rem;
+}
+.alz-cart__coupon { padding:16px; border-top:1px solid var(--alz-info-surface); }
+.alz-cart__coupon-title { display:block; margin-bottom:8px; font-weight:700; color:var(--navy); }
+.alz-cart__summary {
+  grid-area: summary;
+  position:sticky; top:88px; padding:22px; border:1px solid var(--alz-purple-soft);
+  border-radius:22px; background: var(--alz-surface-subtle);
+  box-shadow: var(--alz-shadow-md);
+  width: 100%;
+}
+.alz-cart__summary .wc-proceed-to-checkout a.checkout-button {
+  min-height:56px; border-radius:14px; font-weight:600;
+  background: var(--alz-gradient-action);
+}
+.alz-cart__continue { margin:14px 0 0; text-align:center; }
+.alz-cart__continue a { color:var(--purple); font-weight:600; }
+.woocommerce-cart .woocommerce-info,
+.woocommerce-cart .alz-support-card,
+.woocommerce-cart .registration-trust-card { max-width:100%; font-size:.9rem; }
+.alz-cart-mobile-bar {
+  display:none; position:fixed; inset-inline:0; bottom:0; z-index:40;
+  gap:12px; align-items:center; justify-content:space-between;
+  padding:12px 16px calc(12px + env(safe-area-inset-bottom));
+  background:var(--alz-surface); border-top:1px solid var(--line); box-shadow: var(--alz-shadow-md);
+}
+.alz-cart-mobile-bar .button {
+  min-height:48px; padding:0 16px; border-radius:12px; border:0;
+  background:var(--purple); color:var(--alz-surface); font-weight:600; text-decoration:none; display:inline-flex; align-items:center;
+}
+
+.alz-entitlements { margin:24px 0; padding:20px; border:1px solid var(--line); border-radius:18px; background:var(--alz-surface); }
+.alz-entitlements__title { margin:0 0 14px; color:var(--navy); }
+.alz-entitlements__list { list-style:none; margin:0; padding:0; display:grid; gap:12px; }
+.alz-entitlements__item {
+  display:grid; gap:6px; padding:14px; border:1px solid var(--alz-info-surface); border-radius:14px; background:var(--surface-2);
+}
+.alz-entitlements__btn { display:inline-flex; align-items:center; min-height:42px; padding:0 16px; border-radius:12px; background:var(--teal); color:var(--alz-surface); text-decoration:none; font-weight:600; width:fit-content; }
+
+@media (max-width: 900px) {
+  .alz-digital-product__card {
+    grid-template-columns:1fr;
+    grid-template-areas:
+      "notices"
+      "gallery"
+      "info";
+  }
+  .alz-cart {
+    grid-template-columns:1fr;
+    grid-template-areas:
+      "items"
+      "summary";
+  }
+  .alz-cart__summary { position:static; }
+  .alz-cart__row { grid-template-columns:72px minmax(0,1fr); grid-template-areas:"thumb meta" "qty qty" "total remove"; }
+  .alz-cart__thumb { grid-area:thumb; }
+  .alz-cart__meta { grid-area:meta; }
+  .alz-cart__qty { grid-area:qty; }
+  .alz-cart__line-total { grid-area:total; }
+  .alz-cart__remove { grid-area:remove; justify-self:end; }
+  .alz-cart-mobile-bar { display:flex; }
+  .woocommerce-cart .alz-cart__summary .wc-proceed-to-checkout { display:none; }
+}
+
+/* ============================================================
+   My Account mobile hardening
+   Keep every endpoint in a true single-column flow. The account menu uses
+   the available width instead of imitating the desktop sidebar or creating
+   a max-content scroller, and WooCommerce tables become readable cards.
+============================================================ */
+@media (max-width: 900px) {
+  body.woocommerce-account .page-content,
+  body.woocommerce-account .woocommerce,
+  body.woocommerce-account .woocommerce-MyAccount-navigation,
+  body.woocommerce-account .woocommerce-MyAccount-content {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  body.woocommerce-account.logged-in .woocommerce,
+  body.woocommerce-account .woocommerce:has(> .woocommerce-MyAccount-navigation) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "notices"
+      "nav"
+      "content";
+    gap: 16px;
+  }
+
+  body.woocommerce-account .woocommerce > *,
+  body.woocommerce-account .woocommerce-MyAccount-content > * {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  body.woocommerce-account .woocommerce-MyAccount-navigation {
+    position: static;
+    overflow: visible;
+  }
+
+  body.woocommerce-account .woocommerce-MyAccount-navigation ul {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    width: 100%;
+    min-width: 0;
+    padding: 8px;
+  }
+
+  body.woocommerce-account .woocommerce-MyAccount-navigation li {
+    min-width: 0;
+  }
+
+  body.woocommerce-account .woocommerce-MyAccount-navigation a {
+    width: 100%;
+    min-width: 0;
+    min-height: 44px;
+    justify-content: flex-start;
+    padding: 9px 11px;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  body.woocommerce-account .woocommerce-MyAccount-navigation a:hover {
+    transform: none;
+  }
+
+  body.woocommerce-account .woocommerce-MyAccount-content {
+    min-height: 0;
+  }
+
+  body.woocommerce-account .trainee-dashboard,
+  body.woocommerce-account .trainee-welcome,
+  body.woocommerce-account .trainee-stats,
+  body.woocommerce-account .trainee-recent,
+  body.woocommerce-account .trainee-actions,
+  body.woocommerce-account .account-sections,
+  body.woocommerce-account .account-card {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  body.woocommerce-account .trainee-order-main,
+  body.woocommerce-account .trainee-order-main :is(strong, small),
+  body.woocommerce-account .alz-account-endpoint-intro,
+  body.woocommerce-account .alz-account-endpoint-intro :is(h2, p) {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  body.woocommerce-account .trainee-recent-head {
+    flex-wrap: wrap;
+    gap: 8px 14px;
+  }
+
+  body.woocommerce-account .trainee-recent-head a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+  }
+}
+
+@media (max-width: 680px) {
+  body.woocommerce-account .woocommerce-MyAccount-content {
+    padding: 18px 14px;
+  }
+
+  body.woocommerce-account .trainee-stats {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  body.woocommerce-account .trainee-stat,
+  body.woocommerce-account .trainee-order,
+  body.woocommerce-account .trainee-recent-head {
+    padding-inline: 16px;
+  }
+
+  body.woocommerce-account .trainee-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  body.woocommerce-account .trainee-actions .btn,
+  body.woocommerce-account .account-submit .button {
+    width: 100%;
+    min-width: 0;
+  }
+
+  body.woocommerce-account .woocommerce-orders-table tr,
+  body.woocommerce-account .woocommerce-table--order-downloads tr {
+    width: 100%;
+    min-width: 0;
+  }
+
+  body.woocommerce-account .woocommerce-orders-table :is(th, td),
+  body.woocommerce-account .woocommerce-table--order-downloads :is(th, td) {
+    display: grid;
+    grid-template-columns: minmax(84px, .42fr) minmax(0, 1fr);
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    overflow-wrap: anywhere;
+    text-align: start !important;
+  }
+
+  body.woocommerce-account .woocommerce-orders-table :is(th, td)::before,
+  body.woocommerce-account .woocommerce-table--order-downloads :is(th, td)::before {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  body.woocommerce-account .woocommerce-orders-table :is(a, .button),
+  body.woocommerce-account .woocommerce-table--order-downloads :is(a, .button) {
+    min-width: 0;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+  }
+
+  body.woocommerce-account .woocommerce-orders-table .button,
+  body.woocommerce-account .woocommerce-table--order-downloads .button {
+    min-height: 46px;
+  }
+
+  body.woocommerce-account:not(.logged-in) .woocommerce #customer_login,
+  body.woocommerce-account:not(.logged-in) .woocommerce form.woocommerce-ResetPassword {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  body.woocommerce-account:not(.logged-in) .woocommerce form :is(.form-row, .password-input),
+  body.woocommerce-account:not(.logged-in) .woocommerce form :is(input, button) {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  body.woocommerce-account:not(.logged-in) .woocommerce .woocommerce-form-login__rememberme {
+    width: 100%;
+    min-height: 44px;
+  }
+
+  body.woocommerce-account:not(.logged-in) .woocommerce :is(.woocommerce-form-login__submit, .woocommerce-form-register__submit, .woocommerce-ResetPassword button.button) {
+    width: 100%;
+    min-height: 48px;
+  }
+}
+
+@media (max-width: 360px) {
+  body.woocommerce-account .woocommerce-MyAccount-navigation ul {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  body.woocommerce-account .woocommerce-MyAccount-content {
+    padding: 0;
+    border-radius: 0;
+  }
+
+  body.woocommerce-account .trainee-welcome,
+  body.woocommerce-account .account-card,
+  body.woocommerce-account:not(.logged-in) .woocommerce #customer_login :is(.u-column1, .u-column2),
+  body.woocommerce-account:not(.logged-in) .woocommerce form.woocommerce-ResetPassword {
+    padding-inline: 14px;
+  }
+
+  body.woocommerce-account .woocommerce-orders-table tr,
+  body.woocommerce-account .woocommerce-table--order-downloads tr {
+    padding-inline: 12px;
+  }
+
+  body.woocommerce-account .woocommerce-orders-table :is(th, td),
+  body.woocommerce-account .woocommerce-table--order-downloads :is(th, td) {
+    grid-template-columns: minmax(78px, .4fr) minmax(0, 1fr);
+    gap: 8px;
+  }
 }

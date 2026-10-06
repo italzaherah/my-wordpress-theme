@@ -292,10 +292,10 @@ function alzaherah_platform_screen() {
 function alzaherah_account_menu_items( $items ) {
 
 	if ( isset( $items['dashboard'] ) ) {
-		$items['dashboard'] = __( 'نظرة عامة', 'alzaherah' );
+		$items['dashboard'] = __( 'دوراتي', 'alzaherah' );
 	}
 	if ( isset( $items['orders'] ) ) {
-		$items['orders'] = __( 'تسجيلاتي', 'alzaherah' );
+		$items['orders'] = __( 'طلباتي', 'alzaherah' );
 	}
 	unset( $items['edit-address'] );
 	if ( isset( $items['edit-account'] ) ) {
@@ -307,7 +307,7 @@ function alzaherah_account_menu_items( $items ) {
 
 	if ( isset( $items['downloads'] ) ) {
 		if ( class_exists( 'ALZ_Training_Products' ) ) {
-			$items['downloads'] = __( 'منتجاتي الرقمية', 'alzaherah' );
+			$items['downloads'] = __( 'مشترياتي', 'alzaherah' );
 		} else {
 			unset( $items['downloads'] );
 		}
@@ -326,7 +326,7 @@ add_filter( 'woocommerce_account_menu_items', 'alzaherah_account_menu_items' );
  */
 function alzaherah_account_endpoint_titles( $title, $endpoint ) {
 	if ( 'orders' === $endpoint ) {
-		return __( 'تسجيلاتي', 'alzaherah' );
+		return __( 'طلباتي', 'alzaherah' );
 	}
 	return $title;
 }
@@ -334,6 +334,64 @@ add_filter( 'woocommerce_endpoint_orders_title', 'alzaherah_account_endpoint_tit
 
 /** تسمية صفحة تنزيلات WooCommerce بما يناسب المنتجات التدريبية الرقمية. */
 function alzaherah_downloads_endpoint_title( $title ) {
-	return class_exists( 'ALZ_Training_Products' ) ? __( 'منتجاتي الرقمية', 'alzaherah' ) : $title;
+	return class_exists( 'ALZ_Training_Products' ) ? __( 'مشترياتي', 'alzaherah' ) : $title;
 }
 add_filter( 'woocommerce_endpoint_downloads_title', 'alzaherah_downloads_endpoint_title' );
+
+/** Arabic, transaction-oriented labels for the orders table. */
+function alzaherah_account_orders_columns( $columns ) {
+	$labels = array(
+		'order-number'  => __( 'الطلب', 'alzaherah' ),
+		'order-date'    => __( 'التاريخ', 'alzaherah' ),
+		'order-status'  => __( 'معالجة الطلب', 'alzaherah' ),
+		'order-total'   => __( 'الإجمالي', 'alzaherah' ),
+		'order-actions' => __( 'الإجراء', 'alzaherah' ),
+	);
+	foreach ( $labels as $key => $label ) {
+		if ( isset( $columns[ $key ] ) ) {
+			$columns[ $key ] = $label;
+		}
+	}
+	return $columns;
+}
+add_filter( 'woocommerce_my_account_my_orders_columns', 'alzaherah_account_orders_columns', 20 );
+
+/** Arabic labels for purchased digital files. */
+function alzaherah_account_downloads_columns( $columns ) {
+	$labels = array(
+		'download-product'   => __( 'المنتج', 'alzaherah' ),
+		'download-file'      => __( 'ملف التنزيل', 'alzaherah' ),
+		'download-remaining' => __( 'التنزيلات المتبقية', 'alzaherah' ),
+		'download-expires'   => __( 'انتهاء الصلاحية', 'alzaherah' ),
+	);
+	foreach ( $labels as $key => $label ) {
+		if ( isset( $columns[ $key ] ) ) {
+			$columns[ $key ] = $label;
+		}
+	}
+	return $columns;
+}
+add_filter( 'woocommerce_account_downloads_columns', 'alzaherah_account_downloads_columns', 20 );
+
+/** Explain the semantic boundary between courses, purchases and transactions. */
+function alzaherah_before_account_orders() {
+	?>
+	<header class="alz-account-endpoint-intro">
+		<span><?php esc_html_e( 'المعاملات وحالات الدفع', 'alzaherah' ); ?></span>
+		<h2><?php esc_html_e( 'طلباتي', 'alzaherah' ); ?></h2>
+		<p><?php esc_html_e( 'جميع الطلبات التي أنشأتها، مع حالة معالجة كل طلب وإجراءات عرضه أو إكمال دفعه عند الحاجة.', 'alzaherah' ); ?></p>
+	</header>
+	<?php
+}
+add_action( 'woocommerce_before_account_orders', 'alzaherah_before_account_orders', 5 );
+
+function alzaherah_before_account_downloads() {
+	?>
+	<header class="alz-account-endpoint-intro">
+		<span><?php esc_html_e( 'المنتجات الرقمية المملوكة', 'alzaherah' ); ?></span>
+		<h2><?php esc_html_e( 'مشترياتي', 'alzaherah' ); ?></h2>
+		<p><?php esc_html_e( 'تظهر هنا ملفات المنتجات الرقمية التي ثبت دفعها وأصبحت صلاحية تنزيلها متاحة لحسابك.', 'alzaherah' ); ?></p>
+	</header>
+	<?php
+}
+add_action( 'woocommerce_before_account_downloads', 'alzaherah_before_account_downloads', 5 );

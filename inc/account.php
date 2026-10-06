@@ -201,30 +201,70 @@ function alzaherah_account_dashboard() {
 				);
 				?>
 			</h2>
-			<p><?php esc_html_e( 'من لوحتك تتابع تسجيلاتك وحالة كل دورة، وتحدّث بياناتك في أي وقت.', 'alzaherah' ); ?></p>
+			<p><?php esc_html_e( 'هنا دوراتك المسجلة وحالة تأكيد كل دورة. طلبات الدفع مستقلة في «طلباتي»، والمنتجات الرقمية في «مشترياتي».', 'alzaherah' ); ?></p>
 		</div>
 
 		<!-- الإحصاءات -->
+		<?php
+		// The plugin owns targeting and access checks; no order data is copied into the theme.
+		if ( class_exists( 'ALZ_Course_Notices' ) && method_exists( 'ALZ_Course_Notices', 'render_account_for_current_user' ) ) {
+			ALZ_Course_Notices::render_account_for_current_user();
+		}
+		?>
 		<div class="trainee-stats">
 			<div class="trainee-stat">
 				<strong><?php echo esc_html( number_format_i18n( $total_registrations ) ); ?></strong>
-				<span><?php esc_html_e( 'إجمالي التسجيلات', 'alzaherah' ); ?></span>
+				<span><?php esc_html_e( 'إجمالي الدورات', 'alzaherah' ); ?></span>
 			</div>
 			<div class="trainee-stat">
 				<strong><?php echo esc_html( number_format_i18n( $active_registrations ) ); ?></strong>
-				<span><?php esc_html_e( 'تسجيلات مؤكدة', 'alzaherah' ); ?></span>
+				<span><?php esc_html_e( 'دورات مؤكدة', 'alzaherah' ); ?></span>
 			</div>
 		</div>
+
+		<?php
+		$alz_el_courses = function_exists( 'alz_elearning_user_courses' ) ? alz_elearning_user_courses( $user->ID, 12 ) : array();
+		if ( $alz_el_courses ) :
+			?>
+			<!-- دوراتي الإلكترونية -->
+			<div class="trainee-recent trainee-elearning">
+				<div class="trainee-recent-head">
+					<h3><?php esc_html_e( 'دوراتي الإلكترونية', 'alzaherah' ); ?></h3>
+				</div>
+				<?php foreach ( $alz_el_courses as $alz_el_course ) : ?>
+					<?php
+					$alz_el_title    = get_the_title( $alz_el_course['product_id'] );
+					$alz_el_pct      = null !== $alz_el_course['progress'] ? (int) round( $alz_el_course['progress'] ) : null;
+					$alz_el_state    = null === $alz_el_pct || 0 === $alz_el_pct
+						? __( 'لم تبدأ بعد', 'alzaherah' )
+						: ( $alz_el_pct >= 100 ? __( 'مكتملة', 'alzaherah' ) : __( 'قيد التعلم', 'alzaherah' ) );
+					$alz_el_cta      = null === $alz_el_pct || 0 === $alz_el_pct
+						? __( 'ابدأ التعلم', 'alzaherah' )
+						: ( $alz_el_pct >= 100 ? __( 'مراجعة الدورة', 'alzaherah' ) : __( 'متابعة التعلم', 'alzaherah' ) );
+					?>
+					<div class="trainee-elearning-course">
+						<div class="trainee-elearning-main">
+							<strong><?php echo esc_html( $alz_el_title ); ?></strong>
+							<small><?php echo esc_html( $alz_el_state ); ?><?php if ( null !== $alz_el_pct ) : ?> · <?php echo esc_html( number_format_i18n( $alz_el_pct ) ); ?>%<?php endif; ?></small>
+							<?php if ( null !== $alz_el_pct ) : ?>
+								<div class="trainee-elearning-bar" role="progressbar" aria-valuenow="<?php echo esc_attr( $alz_el_pct ); ?>" aria-valuemin="0" aria-valuemax="100"><span style="width:<?php echo esc_attr( $alz_el_pct ); ?>%"></span></div>
+							<?php endif; ?>
+						</div>
+						<?php if ( $alz_el_course['learning_url'] ) : ?>
+							<a class="btn btn-primary" href="<?php echo esc_url( $alz_el_course['learning_url'] ); ?>"><?php echo esc_html( $alz_el_cta ); ?></a>
+						<?php endif; ?>
+					</div>
+				<?php endforeach; ?>
+			</div>
+		<?php endif; ?>
 
 		<?php if ( ! empty( $recent ) ) : ?>
 
 			<!-- آخر التسجيلات -->
 			<div class="trainee-recent">
 				<div class="trainee-recent-head">
-					<h3><?php esc_html_e( 'آخر تسجيلاتك', 'alzaherah' ); ?></h3>
-					<a href="<?php echo esc_url( wc_get_account_endpoint_url( 'orders' ) ); ?>">
-						<?php esc_html_e( 'عرض الكل', 'alzaherah' ); ?>
-					</a>
+					<h3><?php esc_html_e( 'آخر دوراتك', 'alzaherah' ); ?></h3>
+					<a href="<?php echo esc_url( alzaherah_shop_url() ); ?>"><?php esc_html_e( 'استعراض الدورات', 'alzaherah' ); ?></a>
 				</div>
 
 				<?php foreach ( $recent as $order ) : ?>
@@ -312,3 +352,50 @@ function alzaherah_cancelled_order_customer_notice( $order_id ) {
 	<?php
 }
 add_action( 'woocommerce_view_order', 'alzaherah_cancelled_order_customer_notice', 1 );
+
+/**
+ * True only while the exam player is running (attempt query).
+ * Start/result screens keep the normal My Account chrome.
+ */
+function alzaherah_is_active_exam_attempt() {
+	if ( ! function_exists( 'is_account_page' ) || ! is_account_page() ) {
+		return false;
+	}
+
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- layout flag from public player query.
+	return isset( $_GET['attempt'] ) && absint( wp_unslash( $_GET['attempt'] ) ) > 0;
+}
+
+/**
+ * Layout flags only: account application shell vs exam focus-mode.
+ * Does not change endpoints, entitlements, or exam runtime.
+ *
+ * @param string[] $classes Body classes.
+ * @return string[]
+ */
+function alzaherah_account_body_class( $classes ) {
+	if ( ! function_exists( 'is_account_page' ) || ! is_account_page() ) {
+		return $classes;
+	}
+
+	$classes[] = 'alz-account-shell';
+
+	if ( alzaherah_is_active_exam_attempt() ) {
+		$classes[] = 'alz-exam-focus';
+	}
+
+	return $classes;
+}
+add_filter( 'body_class', 'alzaherah_account_body_class' );
+
+/**
+ * Hide Woo account navigation during an active attempt only.
+ */
+function alzaherah_exam_focus_hide_account_nav() {
+	if ( ! alzaherah_is_active_exam_attempt() ) {
+		return;
+	}
+
+	remove_action( 'woocommerce_account_navigation', 'woocommerce_account_navigation' );
+}
+add_action( 'template_redirect', 'alzaherah_exam_focus_hide_account_nav' );

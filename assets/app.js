@@ -2,7 +2,7 @@
  * السكربت الرئيسي لقالب الزاهرة
  * قائمة الجوال + التبويبات + الفلترة والبحث + التنبيهات + عدّادات الأرقام
  *
- * @version 3.12.0
+ * @version 4.12.4
  */
 (() => {
   'use strict';
@@ -14,12 +14,25 @@
      مع مزامنة aria-expanded وإدارة التركيز وإغلاق بزر Escape
   ============================================================ */
   const drawer   = document.querySelector('.mobile-drawer');
+	const drawerDialog = drawer?.querySelector('.drawer-panel');
   const openBtn  = document.querySelector('.menu-toggle');
   const closeBtn = document.querySelector('.drawer-close');
   const backdrop = document.querySelector('.drawer-backdrop');
+	let drawerReturnFocus = null;
+
+	const drawerFocusable = () => drawer
+		? Array.from(drawer.querySelectorAll('a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])'))
+			.filter((element) => !element.hidden && element.getAttribute('aria-hidden') !== 'true')
+		: [];
+
+	if (drawer && 'inert' in drawer && !drawer.classList.contains('open')) {
+		drawer.inert = true;
+	}
 
   const openDrawer = () => {
     if (!drawer) return;
+		drawerReturnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : openBtn;
+		if ('inert' in drawer) drawer.inert = false;
     drawer.classList.add('open');
     drawer.setAttribute('aria-hidden', 'false');
     openBtn?.setAttribute('aria-expanded', 'true');
@@ -32,10 +45,13 @@
     if (!drawer) return;
     drawer.classList.remove('open');
     drawer.setAttribute('aria-hidden', 'true');
+		if ('inert' in drawer) drawer.inert = true;
     openBtn?.setAttribute('aria-expanded', 'false');
     body.classList.remove('menu-open');
     // إعادة التركيز إلى زر الفتح بعد الإغلاق.
-    openBtn?.focus();
+		const returnTarget = drawerReturnFocus && document.contains(drawerReturnFocus) ? drawerReturnFocus : openBtn;
+		drawerReturnFocus = null;
+		returnTarget?.focus();
   };
 
   openBtn?.addEventListener('click', openDrawer);
@@ -45,8 +61,29 @@
 
   // إغلاق القائمة بزر Escape.
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && drawer?.classList.contains('open')) {
+		if (!drawer?.classList.contains('open')) return;
+		if (e.key === 'Escape') {
+			e.preventDefault();
       closeDrawer();
+			return;
+		}
+		if (e.key !== 'Tab') return;
+
+		const focusable = drawerFocusable();
+		if (!focusable.length) {
+			e.preventDefault();
+			drawerDialog?.focus();
+			return;
+		}
+
+		const first = focusable[0];
+		const last = focusable[focusable.length - 1];
+		if (e.shiftKey && document.activeElement === first) {
+			e.preventDefault();
+			last.focus();
+		} else if (!e.shiftKey && document.activeElement === last) {
+			e.preventDefault();
+			first.focus();
     }
   });
 
@@ -236,15 +273,27 @@ window.alzCreateInfiniteMarquee = function alzCreateInfiniteMarquee(options) {
   if (!viewport || !track) return null;
 
   const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+	const autoplay = options.autoplay !== false && !reducedMotion;
+	const controls = Array.isArray(options.controls) ? options.controls : [];
   if (reducedMotion) {
     root.classList.add('is-static');
+		if (!viewport.hasAttribute('tabindex')) viewport.setAttribute('tabindex', '0');
+		if (!viewport.hasAttribute('aria-label')) viewport.setAttribute('aria-label', 'محتوى يدوي؛ استخدم التمرير أو الأسهم لاستعراض العناصر');
+		controls.forEach((button) => {
+			button.addEventListener('click', () => {
+				const direction = button.getAttribute('data-partner-direction')
+					|| button.getAttribute('data-marquee-direction')
+					|| 'next';
+				const distance = Math.max(180, Math.round(viewport.clientWidth * 0.7));
+				viewport.scrollBy({ left: direction === 'previous' || direction === 'prev' ? -distance : distance, behavior: 'auto' });
+			});
+		});
     return null;
   }
 
   const itemSelector = options.itemSelector;
   const setClassName = options.setClassName;
   const speed = Number(options.speed) > 0 ? Number(options.speed) : 42;
-  const controls = Array.isArray(options.controls) ? options.controls : [];
 
   let templates = Array.from(track.querySelectorAll(`:scope > ${itemSelector}`));
   if (!templates.length) {
@@ -266,7 +315,8 @@ window.alzCreateInfiniteMarquee = function alzCreateInfiniteMarquee(options) {
   let loopWidth = 0;
   let rafId = 0;
   let lastTs = 0;
-  let paused = false;
+  let paused = !autoplay;
+	let manuallyPaused = !autoplay;
   let running = false;
   let resumeTimer = 0;
 
@@ -405,7 +455,7 @@ window.alzCreateInfiniteMarquee = function alzCreateInfiniteMarquee(options) {
     window.clearTimeout(resumeTimer);
     if (ms > 0) {
       resumeTimer = window.setTimeout(() => {
-        paused = false;
+				paused = manuallyPaused;
         lastTs = 0;
       }, ms);
     }
@@ -413,7 +463,7 @@ window.alzCreateInfiniteMarquee = function alzCreateInfiniteMarquee(options) {
 
   const resumeAuto = () => {
     window.clearTimeout(resumeTimer);
-    paused = false;
+		paused = manuallyPaused;
     lastTs = 0;
   };
 
@@ -436,7 +486,8 @@ window.alzCreateInfiniteMarquee = function alzCreateInfiniteMarquee(options) {
   };
 
   rebuild();
-  start();
+	root.classList.toggle('is-manual', !autoplay);
+	if (autoplay) start();
 
   let resizeTimer = 0;
   window.addEventListener('resize', () => {
@@ -447,16 +498,18 @@ window.alzCreateInfiniteMarquee = function alzCreateInfiniteMarquee(options) {
     }, 120);
   }, { passive: true });
 
-  root.addEventListener('mouseenter', () => pauseAuto(0));
-  root.addEventListener('mouseleave', () => resumeAuto());
-  root.addEventListener('focusin', () => pauseAuto(0));
-  root.addEventListener('focusout', (event) => {
-    if (!root.contains(event.relatedTarget)) resumeAuto();
-  });
-  document.addEventListener('visibilitychange', () => {
-    if (document.hidden) pauseAuto(0);
-    else resumeAuto();
-  });
+	if (autoplay) {
+		root.addEventListener('mouseenter', () => pauseAuto(0));
+		root.addEventListener('mouseleave', () => resumeAuto());
+		root.addEventListener('focusin', () => pauseAuto(0));
+		root.addEventListener('focusout', (event) => {
+			if (!root.contains(event.relatedTarget)) resumeAuto();
+		});
+		document.addEventListener('visibilitychange', () => {
+			if (document.hidden) pauseAuto(0);
+			else resumeAuto();
+		});
+	}
 
   controls.forEach((button) => {
     button.addEventListener('click', () => {
@@ -466,6 +519,29 @@ window.alzCreateInfiniteMarquee = function alzCreateInfiniteMarquee(options) {
       nudge(direction === 'previous' || direction === 'prev' ? 'previous' : 'next');
     });
   });
+
+	// Manual carousels retain touch/pen/mouse swipe without any timed motion.
+	let pointerStartX = null;
+	let pointerStartY = null;
+	viewport.addEventListener('pointerdown', (event) => {
+		if (!event.isPrimary || event.button > 0) return;
+		pointerStartX = event.clientX;
+		pointerStartY = event.clientY;
+		viewport.setPointerCapture?.(event.pointerId);
+	});
+	viewport.addEventListener('pointerup', (event) => {
+		if (pointerStartX === null || pointerStartY === null) return;
+		const horizontal = event.clientX - pointerStartX;
+		const vertical = event.clientY - pointerStartY;
+		pointerStartX = null;
+		pointerStartY = null;
+		if (Math.abs(horizontal) < 40 || Math.abs(horizontal) <= Math.abs(vertical)) return;
+		nudge(horizontal > 0 ? 'previous' : 'next');
+	});
+	viewport.addEventListener('pointercancel', () => {
+		pointerStartX = null;
+		pointerStartY = null;
+	});
 
   return { rebuild, nudge, pauseAuto, resumeAuto };
 };
@@ -481,6 +557,8 @@ window.alzCreateInfiniteMarquee = function alzCreateInfiniteMarquee(options) {
     itemSelector: '.alz3-testimonial-card',
     setClassName: 'alz3-testimonial-marquee-set',
     speed: 42,
+		autoplay: false,
+		controls: Array.from(root.querySelectorAll('[data-marquee-direction]')),
   });
 })();
 
@@ -496,6 +574,7 @@ window.alzCreateInfiniteMarquee = function alzCreateInfiniteMarquee(options) {
     itemSelector: '.alz3-home-partner',
     setClassName: 'alz3-home-partner-marquee-set',
     speed: 42,
+		autoplay: false,
     controls,
   });
 })();
@@ -526,26 +605,67 @@ window.alzCreateInfiniteMarquee = function alzCreateInfiniteMarquee(options) {
 
   roots.forEach((root) => {
     const track = root.querySelector('[data-announcement-track]');
+    const stage = root.querySelector('.alz-announcements-stage');
     const slides = Array.from(root.querySelectorAll('[data-announcement-slide]'));
     const dots = Array.from(root.querySelectorAll('[data-announcement-dot]'));
     const previous = root.querySelector('[data-announcement-prev]');
     const next = root.querySelector('[data-announcement-next]');
     const current = root.querySelector('[data-announcement-current]');
-    const interval = Math.max(6500, Number(root.dataset.announcementInterval || 8000));
+    const requestedInterval = Number(root.dataset.announcementInterval || 0);
+    const interval = requestedInterval > 0 ? Math.max(6500, requestedInterval) : 0;
     if (!track || !slides.length) return;
+
+		const announcementControls = root.querySelector('.alz-announcements-controls');
+		let pauseToggle = root.querySelector('[data-announcement-toggle]');
+		if (!pauseToggle && interval > 0 && slides.length > 1 && announcementControls) {
+			pauseToggle = document.createElement('button');
+			pauseToggle.type = 'button';
+			pauseToggle.setAttribute('data-announcement-toggle', '');
+			pauseToggle.setAttribute('aria-controls', track.id || 'alz-announcements-track');
+			pauseToggle.innerHTML = '<span aria-hidden="true" data-announcement-toggle-icon>Ⅱ</span>';
+			announcementControls.appendChild(pauseToggle);
+		}
 
     let index = 0;
     let autoDirection = 1;
     let timer = 0;
-    let paused = false;
+    let paused = interval <= 0;
+		let manuallyPaused = interval <= 0;
     let pointerStartX = null;
+    const fitActiveSlide = () => {
+      if (!stage || !slides[index]) return;
+      const height = Math.ceil(slides[index].getBoundingClientRect().height);
+      if (height > 0) stage.style.height = `${height}px`;
+    };
     root.dataset.enhanced = 'true';
+		const countStatus = current?.closest('.alz-announcements-count');
+		if (countStatus) countStatus.setAttribute('aria-live', 'off');
+
+		const updatePauseToggle = () => {
+			if (!pauseToggle) return;
+			const label = manuallyPaused ? 'تشغيل الإعلانات المتحركة' : 'إيقاف الإعلانات المتحركة';
+			pauseToggle.setAttribute('aria-pressed', manuallyPaused ? 'true' : 'false');
+			pauseToggle.setAttribute('aria-label', label);
+			pauseToggle.title = label;
+			const icon = pauseToggle.querySelector('[data-announcement-toggle-icon]');
+			if (icon) icon.textContent = manuallyPaused ? '▶' : 'Ⅱ';
+		};
 
     const setSlideAccess = (slide, active) => {
       slide.classList.toggle('is-active', active);
       slide.setAttribute('aria-hidden', active ? 'false' : 'true');
-      if ('inert' in slide) slide.inert = !active;
+		slide.toggleAttribute('inert', !active);
     };
+
+		slides.forEach((slide, slideIndex) => {
+			const slideId = slide.id || `alz-announcement-slide-${slideIndex + 1}`;
+			slide.id = slideId;
+			setSlideAccess(slide, slideIndex === index);
+			if (dots[slideIndex]) {
+				dots[slideIndex].setAttribute('aria-controls', slideId);
+				dots[slideIndex].setAttribute('tabindex', slideIndex === index ? '0' : '-1');
+			}
+		});
 
     const show = (nextIndex, moveFocus = false) => {
       if (slides.length < 1) return;
@@ -556,8 +676,12 @@ window.alzCreateInfiniteMarquee = function alzCreateInfiniteMarquee(options) {
       window.requestAnimationFrame(() => {
         track.style.transform = `translate3d(${-index * 100}%,0,0)`;
         slides.forEach((slide, slideIndex) => setSlideAccess(slide, slideIndex === index));
-        dots.forEach((dot, dotIndex) => dot.setAttribute('aria-selected', dotIndex === index ? 'true' : 'false'));
+		dots.forEach((dot, dotIndex) => {
+			dot.setAttribute('aria-selected', dotIndex === index ? 'true' : 'false');
+			dot.setAttribute('tabindex', dotIndex === index ? '0' : '-1');
+		});
         if (current) current.textContent = String(index + 1);
+        fitActiveSlide();
         if (moveFocus) slides[index].querySelector('a,button')?.focus({ preventScroll: true });
       });
 
@@ -570,7 +694,7 @@ window.alzCreateInfiniteMarquee = function alzCreateInfiniteMarquee(options) {
 
     const start = () => {
       stop();
-      if (reducedMotion || slides.length < 2 || paused || document.hidden) return;
+			if (!interval || reducedMotion || slides.length < 2 || paused || manuallyPaused || document.hidden) return;
       timer = window.setInterval(() => {
         if (index >= slides.length - 1) autoDirection = -1;
         else if (index <= 0) autoDirection = 1;
@@ -584,6 +708,23 @@ window.alzCreateInfiniteMarquee = function alzCreateInfiniteMarquee(options) {
       show(Number(dot.dataset.announcementDot || 0));
       start();
     }));
+		pauseToggle?.addEventListener('click', () => {
+			manuallyPaused = !manuallyPaused;
+			paused = manuallyPaused;
+			if (manuallyPaused) stop();
+			else start();
+			updatePauseToggle();
+		});
+		if (pauseToggle && reducedMotion) {
+			manuallyPaused = true;
+			paused = true;
+			pauseToggle.disabled = true;
+		}
+		updatePauseToggle();
+		if (pauseToggle && reducedMotion) {
+			pauseToggle.setAttribute('aria-label', 'الحركة متوقفة حسب إعدادات تقليل الحركة');
+			pauseToggle.title = 'الحركة متوقفة حسب إعدادات تقليل الحركة';
+		}
 
     root.addEventListener('keydown', (event) => {
       if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
@@ -650,11 +791,11 @@ window.alzCreateInfiniteMarquee = function alzCreateInfiniteMarquee(options) {
     });
 
     root.addEventListener('mouseenter', () => { paused = true; stop(); });
-    root.addEventListener('mouseleave', () => { paused = false; start(); });
+		root.addEventListener('mouseleave', () => { paused = manuallyPaused; start(); });
     root.addEventListener('focusin', () => { paused = true; stop(); });
     root.addEventListener('focusout', (event) => {
       if (root.contains(event.relatedTarget)) return;
-      paused = false;
+			paused = manuallyPaused;
       start();
     });
     document.addEventListener('visibilitychange', () => {
@@ -662,8 +803,17 @@ window.alzCreateInfiniteMarquee = function alzCreateInfiniteMarquee(options) {
       else start();
     });
 
-    show(0);
-    start();
+		track.style.transform = 'translate3d(0,0,0)';
+    if ('ResizeObserver' in window) {
+      const observer = new ResizeObserver(fitActiveSlide);
+      slides.forEach((slide) => observer.observe(slide));
+    } else {
+      window.addEventListener('resize', fitActiveSlide, { passive: true });
+      root.querySelectorAll('img').forEach((img) => img.addEventListener('load', fitActiveSlide));
+    }
+    document.fonts?.ready.then(fitActiveSlide);
+    fitActiveSlide();
+    if (interval > 0) start();
   });
 })();
 

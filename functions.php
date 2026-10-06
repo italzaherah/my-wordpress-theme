@@ -9,7 +9,40 @@
 defined( 'ABSPATH' ) || exit;
 
 if ( ! defined( 'ALZAHERAH_THEME_VERSION' ) ) {
-	define( 'ALZAHERAH_THEME_VERSION', '4.8.4' );
+	define( 'ALZAHERAH_THEME_VERSION', '4.14.2' );
+}
+
+/**
+ * رابط صفحة الاختبارات مع حماية من Fatal إن لم تكن نواة الاختبارات محمّلة.
+ *
+ * @return string
+ */
+function alzaherah_exams_page_url() {
+	if ( class_exists( 'ALZ_Exams' ) && is_callable( array( 'ALZ_Exams', 'page_url' ) ) ) {
+		$url = ALZ_Exams::page_url();
+		if ( is_string( $url ) && '' !== $url ) {
+			return $url;
+		}
+	}
+	return home_url( '/exams/' );
+}
+
+/**
+ * Whether the current request is the public exams catalogue.
+ *
+ * The option name is intentionally kept as a stable fallback so the Theme
+ * can provide the correct shell even while Platform Core is loading.
+ *
+ * @return bool
+ */
+function alzaherah_is_exams_catalog_page() {
+	$page_id = absint( get_option( 'alz_exams_page_id' ) );
+
+	if ( class_exists( 'ALZ_Exams' ) && defined( 'ALZ_Exams::PAGE_OPTION' ) ) {
+		$page_id = absint( get_option( ALZ_Exams::PAGE_OPTION ) );
+	}
+
+	return ( $page_id && is_page( $page_id ) ) || is_page( 'exams' );
 }
 
 /**
@@ -20,11 +53,11 @@ function alzaherah_core_compatibility_notice() {
 		return;
 	}
 	if ( ! defined( 'ALZ_CORE_VERSION' ) ) {
-		echo '<div class="notice notice-warning"><p>' . esc_html__( 'ثيم الزاهرة 4.8.4 يحتاج إلى إضافة Alzaherah Platform Core 3.0.8 لتشغيل كتالوج المنتجات الرقمية ومسار الدفع الموحّد بأمان.', 'alzaherah' ) . '</p></div>';
+		echo '<div class="notice notice-warning"><p>' . esc_html__( 'ثيم الزاهرة 4.12.5 يحتاج إلى إضافة Alzaherah Platform Core 3.4.9 لتشغيل تجربة الاختبارات وعقد الهوية v4.1.3 بأمان.', 'alzaherah' ) . '</p></div>';
 		return;
 	}
-	if ( version_compare( ALZ_CORE_VERSION, '3.0.8', '<' ) ) {
-		echo '<div class="notice notice-error"><p>' . esc_html__( 'نسخة Alzaherah Platform Core الحالية غير متوافقة مع الثيم. حدّثها إلى 3.0.8 قبل استقبال طلبات جديدة.', 'alzaherah' ) . '</p></div>';
+	if ( version_compare( ALZ_CORE_VERSION, '3.4.9', '<' ) ) {
+		echo '<div class="notice notice-error"><p>' . esc_html__( 'نسخة Alzaherah Platform Core الحالية غير متوافقة مع الثيم. حدّثها إلى 3.4.9 قبل استقبال محاولات اختبار جديدة.', 'alzaherah' ) . '</p></div>';
 	}
 }
 add_action( 'admin_notices', 'alzaherah_core_compatibility_notice' );
@@ -59,6 +92,10 @@ function alzaherah_setup() {
 	add_theme_support( 'title-tag' );
 	add_theme_support( 'post-thumbnails' );
 	add_theme_support( 'responsive-embeds' );
+
+	/* هوية v4: قصّ مستقل لسطح المكتب (1024×725) وآخر للجوال 4:3. */
+	add_image_size( 'alz_announcement_desktop', 1024, 725, true );
+	add_image_size( 'alz_announcement_mobile', 900, 675, true );
 
 	add_theme_support(
 		'custom-logo',
@@ -130,15 +167,54 @@ add_action( 'login_head', 'alzaherah_brand_favicon_tags', 100 );
  */
 function alzaherah_assets() {
 	$theme_version = wp_get_theme()->get( 'Version' );
+	$tokens_file   = get_template_directory() . '/assets/design-tokens-v4.css';
 	$style_file    = get_stylesheet_directory() . '/style.css';
+	$v4_file       = get_template_directory() . '/assets/theme-v4.css';
 	$app_file      = get_template_directory() . '/assets/app.js';
+	$tokens_version = file_exists( $tokens_file ) ? (string) filemtime( $tokens_file ) : $theme_version;
 	$style_version = file_exists( $style_file ) ? (string) filemtime( $style_file ) : $theme_version;
+	$v4_version    = file_exists( $v4_file ) ? (string) filemtime( $v4_file ) : $theme_version;
 	$app_version   = file_exists( $app_file ) ? (string) filemtime( $app_file ) : $theme_version;
 
-	wp_enqueue_style( 'alzaherah-style', get_stylesheet_uri(), array(), $style_version );
+	wp_enqueue_style( 'alzaherah-design-tokens-v4', get_template_directory_uri() . '/assets/design-tokens-v4.css', array(), $tokens_version );
+	wp_enqueue_style( 'alzaherah-style', get_stylesheet_uri(), array( 'alzaherah-design-tokens-v4' ), $style_version );
+	wp_enqueue_style( 'alzaherah-theme-v4', get_template_directory_uri() . '/assets/theme-v4.css', array( 'alzaherah-style' ), $v4_version );
 	wp_enqueue_script( 'alzaherah-app', get_template_directory_uri() . '/assets/app.js', array(), $app_version, true );
+
+	// هوية v4 فوق أسطح محرك التعلم الداخلي (دورة/درس/اختبار قصير) دون تعديل ملفاته.
+	if ( is_singular( array( 'courses', 'lesson', 'tutor_quiz', 'tutor_assignments' ) ) ) {
+		$elearning_file = get_template_directory() . '/assets/elearning.css';
+		if ( file_exists( $elearning_file ) ) {
+			wp_enqueue_style(
+				'alzaherah-elearning',
+				get_template_directory_uri() . '/assets/elearning.css',
+				array( 'alzaherah-theme-v4' ),
+				(string) filemtime( $elearning_file )
+			);
+		}
+	}
 }
 add_action( 'wp_enqueue_scripts', 'alzaherah_assets' );
+
+/** Shared components follow surface styles and are loaded only once for Theme + Core. */
+function alzaherah_shared_components_assets() {
+	$dependencies = array( 'alzaherah-design-tokens-v4', 'alzaherah-theme-v4' );
+	foreach ( array( 'alzaherah-commerce', 'alzaherah-elearning', 'alz-core-platform', 'alz-core-exams-admin', 'alz-core-exams', 'alz-core-exam-catalog' ) as $handle ) {
+		if ( wp_style_is( $handle, 'enqueued' ) ) { $dependencies[] = $handle; }
+	}
+	$file = get_template_directory() . '/assets/shared-components.css';
+	if ( ! is_readable( $file ) ) { return; }
+	$version = ALZAHERAH_THEME_VERSION . '.' . substr( (string) hash_file( 'sha256', $file ), 0, 12 );
+	wp_enqueue_style( 'alzaherah-shared-components', get_template_directory_uri() . '/assets/shared-components.css', $dependencies, $version );
+}
+add_action( 'wp_enqueue_scripts', 'alzaherah_shared_components_assets', 90 );
+
+/** Preload only the Arabic Alexandria subset used above the fold. */
+function alzaherah_preload_primary_font() {
+	$font = get_theme_file_uri( 'assets/fonts/alexandria-var-arabic.woff2' );
+	echo '<link rel="preload" href="' . esc_url( $font ) . '" as="font" type="font/woff2" crossorigin>' . "\n";
+}
+add_action( 'wp_head', 'alzaherah_preload_primary_font', 2 );
 
 /**
  * رابط صفحة الدورات (متجر WooCommerce) مع بديل آمن.
@@ -208,6 +284,10 @@ function alzaherah_account_view_body_class( $classes ) {
 			: 'alzaherah-login-view';
 	}
 
+	if ( alzaherah_is_exams_catalog_page() ) {
+		$classes[] = 'alz-exams-catalog';
+	}
+
 	return $classes;
 }
 add_filter( 'body_class', 'alzaherah_account_view_body_class' );
@@ -223,15 +303,20 @@ function alzaherah_fallback_menu( $args = array() ) {
 		$menu_class = $args['menu_class'];
 	}
 
-	echo '<div class="' . esc_attr( $menu_class ) . '">';
-	echo '<a href="' . esc_url( home_url( '/' ) ) . '">' . esc_html__( 'الرئيسية', 'alzaherah' ) . '</a>';
-	echo '<a href="' . esc_url( alzaherah_shop_url() ) . '">' . esc_html__( 'الدورات', 'alzaherah' ) . '</a>';
-	echo '<a href="' . esc_url( class_exists( 'ALZ_Training_Products' ) ? ALZ_Training_Products::page_url() : home_url( '/training-products/' ) ) . '">' . esc_html__( 'المنتجات التدريبية', 'alzaherah' ) . '</a>';
-	echo '<a href="' . esc_url( home_url( '/policy-center/' ) ) . '">' . esc_html__( 'السياسات', 'alzaherah' ) . '</a>';
-	echo '<a href="' . esc_url( home_url( '/partners/' ) ) . '">' . esc_html__( 'شركاء النجاح', 'alzaherah' ) . '</a>';
-	echo '<a href="' . esc_url( home_url( '/about/' ) ) . '">' . esc_html__( 'عن المركز', 'alzaherah' ) . '</a>';
-	echo '<a href="' . esc_url( home_url( '/contact/' ) ) . '">' . esc_html__( 'تواصل معنا', 'alzaherah' ) . '</a>';
-	echo '</div>';
+	$shop_url              = function_exists( 'alzaherah_shop_url' ) ? alzaherah_shop_url() : home_url( '/shop/' );
+	$training_products_url = class_exists( 'ALZ_Training_Products' ) ? ALZ_Training_Products::page_url() : home_url( '/training-products/' );
+	$exams_url             = function_exists( 'alzaherah_exams_page_url' ) ? alzaherah_exams_page_url() : home_url( '/exams/' );
+
+	echo '<ul class="' . esc_attr( $menu_class ) . '">';
+	echo '<li class="' . esc_attr( alzaherah_primary_nav_item_class( 'home' ) ) . '"><a href="' . esc_url( home_url( '/' ) ) . '"' . alzaherah_primary_nav_current_attr( 'home' ) . '>' . esc_html__( 'الرئيسية', 'alzaherah' ) . '</a></li>';
+	echo '<li class="' . esc_attr( alzaherah_primary_nav_item_class( 'courses' ) ) . '"><a href="' . esc_url( $shop_url ) . '"' . alzaherah_primary_nav_current_attr( 'courses' ) . '>' . esc_html__( 'الدورات', 'alzaherah' ) . '</a></li>';
+	echo '<li class="' . esc_attr( alzaherah_primary_nav_item_class( 'training-products' ) ) . '"><a href="' . esc_url( $training_products_url ) . '"' . alzaherah_primary_nav_current_attr( 'training-products' ) . '>' . esc_html__( 'المنتجات التدريبية', 'alzaherah' ) . '</a></li>';
+	echo '<li class="' . esc_attr( alzaherah_primary_nav_item_class( 'exams' ) ) . '"><a href="' . esc_url( $exams_url ) . '"' . alzaherah_primary_nav_current_attr( 'exams' ) . '>' . esc_html__( 'الاختبارات', 'alzaherah' ) . '</a></li>';
+	echo '<li class="' . esc_attr( alzaherah_primary_nav_item_class( 'policies' ) ) . '"><a href="' . esc_url( home_url( '/policy-center/' ) ) . '"' . alzaherah_primary_nav_current_attr( 'policies' ) . '>' . esc_html__( 'السياسات', 'alzaherah' ) . '</a></li>';
+	echo '<li class="' . esc_attr( alzaherah_primary_nav_item_class( 'partners' ) ) . '"><a href="' . esc_url( home_url( '/partners/' ) ) . '"' . alzaherah_primary_nav_current_attr( 'partners' ) . '>' . esc_html__( 'شركاء النجاح', 'alzaherah' ) . '</a></li>';
+	echo '<li class="' . esc_attr( alzaherah_primary_nav_item_class( 'about' ) ) . '"><a href="' . esc_url( home_url( '/about/' ) ) . '"' . alzaherah_primary_nav_current_attr( 'about' ) . '>' . esc_html__( 'عن المركز', 'alzaherah' ) . '</a></li>';
+	echo '<li class="' . esc_attr( alzaherah_primary_nav_item_class( 'contact' ) ) . '"><a href="' . esc_url( home_url( '/contact/' ) ) . '"' . alzaherah_primary_nav_current_attr( 'contact' ) . '>' . esc_html__( 'تواصل معنا', 'alzaherah' ) . '</a></li>';
+	echo '</ul>';
 }
 
 /**
@@ -470,7 +555,7 @@ add_action( 'after_switch_theme', 'alzaherah_migrate_contact_email' );
  * تحميل تنسيقات صفحات التجارة والتسجيل عند الحاجة.
  */
 function alzaherah_commerce_assets() {
-	$load = is_front_page() || is_page_template( 'page-registration.php' ) || is_page_template( 'page-training-products.php' );
+	$load = is_front_page() || is_page_template( 'page-registration.php' ) || is_page_template( 'page-training-products.php' ) || alzaherah_is_exams_catalog_page();
 	if ( class_exists( 'ALZ_Training_Products' ) ) {
 		$page_id = absint( get_option( ALZ_Training_Products::PAGE_OPTION ) );
 		$load    = $load || ( $page_id && is_page( $page_id ) ) || is_page( ALZ_Training_Products::PAGE_SLUG );
@@ -493,6 +578,11 @@ function alzaherah_commerce_assets() {
 		array( 'alzaherah-style' ),
 		$version
 	);
+
+	$wp_styles = wp_styles();
+	if ( isset( $wp_styles->registered['alzaherah-theme-v4'] ) && ! in_array( 'alzaherah-commerce', $wp_styles->registered['alzaherah-theme-v4']->deps, true ) ) {
+		$wp_styles->registered['alzaherah-theme-v4']->deps[] = 'alzaherah-commerce';
+	}
 }
 add_action( 'wp_enqueue_scripts', 'alzaherah_commerce_assets', 20 );
 
@@ -517,6 +607,77 @@ function alzaherah_price_format() {
 	return '%2$s&nbsp;%1$s';
 }
 add_filter( 'woocommerce_price_format', 'alzaherah_price_format' );
+
+/** Present the Tap gateway in Arabic without changing its processing contract. */
+function alzaherah_tap_gateway_title( $title, $gateway_id ) {
+	return 'tap' === sanitize_key( (string) $gateway_id )
+		? __( 'الدفع الإلكتروني عبر Tap', 'alzaherah' )
+		: $title;
+}
+add_filter( 'woocommerce_gateway_title', 'alzaherah_tap_gateway_title', 20, 2 );
+
+function alzaherah_tap_gateway_description( $description, $gateway_id ) {
+	return 'tap' === sanitize_key( (string) $gateway_id )
+		? __( 'أكمل الدفع بأمان عبر صفحة Tap. تظهر الوسائل المتاحة فعليًا حسب جهازك وإعدادات العملية.', 'alzaherah' )
+		: $description;
+}
+add_filter( 'woocommerce_gateway_description', 'alzaherah_tap_gateway_description', 20, 2 );
+
+/**
+ * هوية v4 فصل 12: زر الدفع يعرض المبلغ النهائي «ادفع 1,399.00 ر.س».
+ */
+function alzaherah_identity_order_button_text( $text ) {
+	if ( ! function_exists( 'WC' ) || ! WC()->cart ) {
+		return $text;
+	}
+	$total = wp_strip_all_tags( html_entity_decode( (string) WC()->cart->get_total(), ENT_QUOTES, 'UTF-8' ) );
+	$total = trim( preg_replace( '/\s+/u', ' ', $total ) );
+	if ( '' === $total ) {
+		return $text;
+	}
+	/* translators: %s: formatted order total, e.g. 1,399.00 ر.س */
+	return sprintf( __( 'ادفع %s', 'alzaherah' ), $total );
+}
+add_filter( 'woocommerce_order_button_text', 'alzaherah_identity_order_button_text', 40 );
+
+/**
+ * بوابة Tap تطبع وصفًا إنجليزيًا داخل payment_box. استبداله بنص الثيم العربي المعتمد.
+ */
+function alzaherah_localize_tap_payment_box() {
+	if ( ! function_exists( 'is_checkout' ) || ( ! is_checkout() && ! is_page_template( 'page-registration.php' ) ) ) {
+		return;
+	}
+	$copy = wp_json_encode( __( 'أكمل الدفع بأمان عبر صفحة Tap. تظهر الوسائل المتاحة فعليًا حسب جهازك وإعدادات العملية.', 'alzaherah' ) );
+	?>
+	<script>
+	(function () {
+		var copy = <?php echo $copy; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- wp_json_encode. ?>;
+		function alzLocalizeTapBox() {
+			document.querySelectorAll('.payment_method_tap .payment_box > p').forEach(function (p) {
+				if (/Pay with your credit card via Tap/i.test(p.textContent || '')) {
+					p.textContent = copy;
+				}
+			});
+			var btn = document.getElementById('place_order');
+			if (btn && document.querySelector('form.checkout.processing')) {
+				btn.setAttribute('aria-busy', 'true');
+			} else if (btn) {
+				btn.removeAttribute('aria-busy');
+			}
+		}
+		document.addEventListener('DOMContentLoaded', alzLocalizeTapBox);
+		if (window.jQuery) {
+			window.jQuery(document.body).on('updated_checkout checkout_error', alzLocalizeTapBox);
+			window.jQuery(document.body).on('checkout_place_order', function () {
+				var btn = document.getElementById('place_order');
+				if (btn) btn.setAttribute('aria-busy', 'true');
+			});
+		}
+	})();
+	</script>
+	<?php
+}
+add_action( 'wp_footer', 'alzaherah_localize_tap_payment_box', 40 );
 
 /**
  * شارة سلة محدثة عبر WooCommerce fragments حتى لا يعرض Cache الصفحة رقمًا قديمًا.
@@ -557,26 +718,74 @@ function alzaherah_registration_url() {
 }
 
 /**
- * صياغة زر الدورة بشكل يناسب التسجيل.
+ * صياغة زر الإضافة حسب نوع المنتج (دورة مقابل منتج رقمي).
  *
  * @return string
  */
 function alzaherah_course_add_to_cart_text() {
+	$product_id = 0;
+	if ( function_exists( 'wc_get_product' ) ) {
+		global $product;
+		if ( $product instanceof WC_Product ) {
+			$product_id = $product->get_id();
+		} elseif ( function_exists( 'is_product' ) && is_product() ) {
+			$product_id = get_queried_object_id();
+		}
+	}
+	if ( $product_id && function_exists( 'alzaherah_is_training_product_id' ) && alzaherah_is_training_product_id( $product_id ) ) {
+		return is_product() ? __( 'أضف إلى السلة', 'alzaherah' ) : __( 'اشتر الآن', 'alzaherah' );
+	}
 	return __( 'سجّل الآن', 'alzaherah' );
 }
 add_filter( 'woocommerce_product_single_add_to_cart_text', 'alzaherah_course_add_to_cart_text' );
 add_filter( 'woocommerce_product_add_to_cart_text', 'alzaherah_course_add_to_cart_text' );
 
 /**
- * الانتقال إلى صفحة التسجيل بعد إضافة دورة إلى السلة.
+ * الدورات تذهب للدفع؛ المنتجات الرقمية تبقى في السلة لتعديل الكمية.
  *
  * @param string $url رابط التحويل الأصلي.
  * @return string
  */
 function alzaherah_add_to_cart_redirect( $url ) {
+	$product_id = absint( $_REQUEST['add-to-cart'] ?? 0 ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+	if ( $product_id && function_exists( 'alzaherah_is_training_product_id' ) && alzaherah_is_training_product_id( $product_id ) ) {
+		return function_exists( 'wc_get_cart_url' ) ? wc_get_cart_url() : $url;
+	}
 	return function_exists( 'wc_get_checkout_url' ) ? wc_get_checkout_url() : $url;
 }
 add_filter( 'woocommerce_add_to_cart_redirect', 'alzaherah_add_to_cart_redirect' );
+
+/**
+ * أصول متحكم الكمية وتحديث السلة عبر Store API.
+ */
+function alzaherah_qty_cart_assets() {
+	if ( ! function_exists( 'is_woocommerce' ) ) {
+		return;
+	}
+	$load = is_product() || is_cart();
+	if ( ! $load ) {
+		return;
+	}
+	$path = get_template_directory() . '/assets/js/alz-qty-cart.js';
+	$ver  = file_exists( $path ) ? (string) filemtime( $path ) : ALZAHERAH_THEME_VERSION;
+	wp_enqueue_script(
+		'alz-qty-cart',
+		get_template_directory_uri() . '/assets/js/alz-qty-cart.js',
+		array(),
+		$ver,
+		true
+	);
+	wp_localize_script(
+		'alz-qty-cart',
+		'alzCart',
+		array(
+			'storeNonce'     => wp_create_nonce( 'wc_store_api' ),
+			'storeUpdateUrl' => esc_url_raw( rest_url( 'wc/store/v1/cart/update-item' ) ),
+			'cartUrl'        => function_exists( 'wc_get_cart_url' ) ? wc_get_cart_url() : '',
+		)
+	);
+}
+add_action( 'wp_enqueue_scripts', 'alzaherah_qty_cart_assets', 35 );
 
 /**
  * عدد الدورات في كل صفحة.
@@ -653,11 +862,13 @@ require_once get_template_directory() . '/inc/account.php';
 require_once get_template_directory() . '/inc/course-fields.php';
 require_once get_template_directory() . '/inc/registrations.php';
 require_once get_template_directory() . '/inc/course-status.php';
+require_once get_template_directory() . '/inc/course-price.php';
 require_once get_template_directory() . '/inc/trainee-profile.php';
 require_once get_template_directory() . '/inc/account-security.php';
 require_once get_template_directory() . '/inc/email-branding.php';
 require_once get_template_directory() . '/inc/legal-compliance.php';
 require_once get_template_directory() . '/inc/partners.php';
+require_once get_template_directory() . '/inc/site-copy.php';
 /**
  * تلوين كلمات محورية في عنوان الواجهة دون السماح بأي HTML من إعدادات المستخدم.
  *
