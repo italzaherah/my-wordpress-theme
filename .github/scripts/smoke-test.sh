@@ -224,7 +224,7 @@ echo "---- PHP log summary"
 if grep -E 'PHP (Fatal error|Parse error)|Uncaught |WordPress database error|WordPress database error' "$DEBUG_LOG"; then
 	fail "PHP fatal errors were logged"
 fi
-own=$(grep -E 'PHP (Warning|Notice|Deprecated)' "$DEBUG_LOG" | grep -E 'alzaherah-platform-core/|alzaherah-theme-v3/|/(self|paired)/|/(self|paired)/' | sed -E 's/^\[[^]]+\] //' | sort | uniq -c)
+own=$(grep -E 'PHP (Warning|Notice|Deprecated)' "$DEBUG_LOG" | grep -E 'alzaherah-platform-core/|alzaherah-theme-v3/|/(self|paired)/|<code>alzaherah[^<]*</code>' | sed -E 's/^\[[^]]+\] //' | sort | uniq -c)
 if [ -n "$own" ]; then
 	echo "$own"
 	fail "PHP warnings/notices originate from the Alzaherah plugin or theme"
