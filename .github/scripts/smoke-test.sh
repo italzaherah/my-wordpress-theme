@@ -39,12 +39,26 @@ foreach ( $pages as $slug => $content ) {
 if ( ! get_page_by_path( "smoke-post", OBJECT, "post" ) ) {
 	wp_insert_post( array( "post_type" => "post", "post_status" => "publish", "post_name" => "smoke-post", "post_title" => "Smoke test post", "post_content" => "Smoke test content" ) );
 }
-if ( class_exists( "WC_Product_Simple" ) && ! get_page_by_path( "smoke-course", OBJECT, "product" ) ) {
-	$p = new WC_Product_Simple();
-	$p->set_name( "Smoke course" ); $p->set_slug( "smoke-course" ); $p->set_regular_price( "100" ); $p->set_status( "publish" ); $p->save();
-	$d = new WC_Product_Simple();
-	$d->set_name( "Smoke digital" ); $d->set_slug( "smoke-digital" ); $d->set_regular_price( "50" );
-	$d->set_virtual( true ); $d->set_downloadable( true ); $d->set_status( "publish" ); $d->save();
+$products = array(
+	"smoke-course"  => array( "Smoke course", "100", false ),
+	"smoke-digital" => array( "Smoke digital", "50", true ),
+	"smoke-exam"    => array( "Smoke exam", "30", true ),
+);
+foreach ( $products as $slug => $spec ) {
+	if ( class_exists( "WC_Product_Simple" ) && ! get_page_by_path( $slug, OBJECT, "product" ) ) {
+		$p = new WC_Product_Simple();
+		$p->set_name( $spec[0] ); $p->set_slug( $slug ); $p->set_regular_price( $spec[1] );
+		$p->set_virtual( $spec[2] ); $p->set_status( "publish" ); $p->save();
+	}
+}
+// Product kinds owned by the plugin, so the theme routes them to their own templates.
+$digital = get_page_by_path( "smoke-digital", OBJECT, "product" );
+if ( $digital && class_exists( "ALZ_Training_Products" ) ) {
+	update_post_meta( $digital->ID, ALZ_Training_Products::KIND_META, ALZ_Training_Products::KIND );
+}
+$exam = get_page_by_path( "smoke-exam", OBJECT, "product" );
+if ( $exam && class_exists( "ALZ_Exams" ) ) {
+	update_post_meta( $exam->ID, ALZ_Exams::KIND_META, ALZ_Exams::KIND );
 }
 ' || fail "could not create smoke fixtures"
 # The plugin creates its dashboard page only while an administrator is logged in.
@@ -52,7 +66,8 @@ $WP eval 'if ( class_exists( "ALZ_Frontend_Dashboard" ) ) { ALZ_Frontend_Dashboa
 $WP rewrite flush >/dev/null 2>&1
 
 # ---------------------------------------------------------------- requests
-# Each entry: "<expected>|<path>" where expected is "ok" (2xx/3xx) or an exact status.
+# Each entry: "<expected>|<path>[|<marker>]" where expected is "ok" (2xx/3xx) or an exact status,
+# and the optional marker is text the response body must contain.
 ANON=(
 	"ok|/" "ok|/?s=smoke" "ok|/?s=" "ok|/?s=%3Cscript%3Ealert(1)%3C%2Fscript%3E" "ok|/?s=zzzz-no-match"
 	"ok|/?s=smoke&post_type=product" "404|/smoke-missing-page/" "404|/?p=999999999"
@@ -75,6 +90,10 @@ if [ "$WITH_PLUGIN" = "1" ]; then
 		DASH=/smoke-dashboard/
 	fi
 	echo "dashboard page: $DASH"
+	ANON+=( "ok|/product/smoke-exam/" )
+	if $WP theme is-active alzaherah-theme-v3 >/dev/null 2>&1; then
+		ANON+=( "ok|/product/smoke-digital/|alz-digital-product" )
+	fi
 	ANON+=( "ok|$DASH" "ok|/smoke-exams/" "ok|/smoke-dashboard/" "ok|/smoke-products/" "404|/alz-download/0123456789abcdef0123456789abcdef/" )
 	ADMIN+=( "ok|/my-account/my-exams/" "ok|/my-account/account-security/" "ok|/smoke-exams/" "ok|/smoke-products/" )
 	for slug in alzaherah-platform alz-core-affiliate-integrity alz-core-analytics alz-core-audit-log alz-core-commissions alz-core-marketers alz-core-settings; do
@@ -86,13 +105,16 @@ if [ "$WITH_PLUGIN" = "1" ]; then
 fi
 
 touch "$DEBUG_LOG"
-request() { # expected path name [cookie-jar]
-	local expected=$1 path=$2 name=$3 jar=${4:-}
+request() { # expected path name [cookie-jar] [marker]
+	local expected=$1 path=$2 name=$3 jar=${4:-} marker=${5:-}
 	local code
 	code=$(curl -s -o "$OUT_DIR/$name.html" -w '%{http_code}' --max-time 90 ${jar:+-b "$jar" -c "$jar"} "$BASE_URL$path")
 	printf '%s\t%s\n' "$code" "$path"
 	if grep -qE 'There has been a critical error|Fatal error' "$OUT_DIR/$name.html"; then
 		fail "$path rendered a PHP fatal error page"
+	fi
+	if [ -n "$marker" ] && ! grep -qF -- "$marker" "$OUT_DIR/$name.html"; then
+		fail "$path does not contain \"$marker\""
 	fi
 	if [ "$expected" = "ok" ]; then
 		[[ "$code" =~ ^[23][0-9][0-9]$ ]] || fail "$path returned HTTP $code (expected 2xx/3xx)"
@@ -102,7 +124,11 @@ request() { # expected path name [cookie-jar]
 }
 
 i=0
-for entry in "${ANON[@]}"; do i=$((i + 1)); request "${entry%%|*}" "${entry#*|}" "anon-$i"; done
+split() { # entry -> expected, path, marker
+	expected=${1%%|*}; rest=${1#*|}; path=${rest%%|*}; marker=""
+	[ "$rest" != "$path" ] && marker=${rest#*|}
+}
+for entry in "${ANON[@]}"; do i=$((i + 1)); split "$entry"; request "$expected" "$path" "anon-$i" "" "$marker"; done
 
 JAR="$OUT_DIR/cookies.txt"
 curl -s -c "$JAR" -o /dev/null "$BASE_URL/wp-login.php"
@@ -111,7 +137,7 @@ curl -s -b "$JAR" -c "$JAR" -o /dev/null -b "wordpress_test_cookie=WP%20Cookie%2
 grep -q 'wordpress_logged_in' "$JAR" || fail "administrator login failed"
 
 i=0
-for entry in "${ADMIN[@]}"; do i=$((i + 1)); request "${entry%%|*}" "${entry#*|}" "admin-$i" "$JAR"; done
+for entry in "${ADMIN[@]}"; do i=$((i + 1)); split "$entry"; request "$expected" "$path" "admin-$i" "$JAR" "$marker"; done
 
 # ---------------------------------------------------------------- PHP log
 echo "---- PHP log summary"
