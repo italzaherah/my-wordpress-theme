@@ -39,6 +39,12 @@
 			return { min: min, max: max };
 		}
 
+		// An emptied or non-numeric field steps from the last valid quantity instead of NaN.
+		function current() {
+			var n = parseQty(input.value);
+			return Number.isFinite(n) ? n : lastValid;
+		}
+
 		function setValue(n, announceMsg) {
 			var lim = limits();
 			n = clamp(n, lim.min, lim.max);
@@ -73,12 +79,12 @@
 
 		if (minus) {
 			minus.addEventListener('click', function () {
-				setValue(parseQty(input.value) - 1, 'الكمية %d');
+				setValue(current() - 1, 'الكمية %d');
 			});
 		}
 		if (plus) {
 			plus.addEventListener('click', function () {
-				setValue(parseQty(input.value) + 1, 'الكمية %d');
+				setValue(current() + 1, 'الكمية %d');
 			});
 		}
 		input.addEventListener('blur', commitTyped);
@@ -88,10 +94,10 @@
 				commitTyped();
 			} else if (e.key === 'ArrowUp') {
 				e.preventDefault();
-				setValue(parseQty(input.value) + 1, 'الكمية %d');
+				setValue(current() + 1, 'الكمية %d');
 			} else if (e.key === 'ArrowDown') {
 				e.preventDefault();
-				setValue(parseQty(input.value) - 1, 'الكمية %d');
+				setValue(current() - 1, 'الكمية %d');
 			}
 		});
 	}
