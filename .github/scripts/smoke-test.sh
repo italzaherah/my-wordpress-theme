@@ -47,6 +47,8 @@ if ( class_exists( "WC_Product_Simple" ) && ! get_page_by_path( "smoke-course", 
 	$d->set_virtual( true ); $d->set_downloadable( true ); $d->set_status( "publish" ); $d->save();
 }
 ' || fail "could not create smoke fixtures"
+# The plugin creates its dashboard page only while an administrator is logged in.
+$WP eval 'if ( class_exists( "ALZ_Frontend_Dashboard" ) ) { ALZ_Frontend_Dashboard::maybe_create_page(); }' --user="$ADMIN_USER" >/dev/null 2>&1
 $WP rewrite flush >/dev/null 2>&1
 
 # ---------------------------------------------------------------- requests
@@ -66,9 +68,12 @@ ADMIN=(
 	"ok|/my-account/edit-address/" "ok|/my-account/orders/" "ok|/" "ok|/?s=smoke" "404|/smoke-missing-page/"
 )
 if [ "$WITH_PLUGIN" = "1" ]; then
-	# The plugin creates and owns its dashboard page; fall back to the shortcode page.
+	# The plugin creates and owns its dashboard page; the shortcode page is only a fallback.
 	DASH=$($WP eval 'echo wp_make_link_relative( (string) get_permalink( (int) get_option( "alz_front_dashboard_page_id" ) ) );' 2>/dev/null | tail -n 1)
-	[[ "$DASH" == /* ]] || DASH=/smoke-dashboard/
+	if [[ "$DASH" != /* ]] || [ "$DASH" = "/" ]; then
+		fail "the plugin dashboard page was not created"
+		DASH=/smoke-dashboard/
+	fi
 	echo "dashboard page: $DASH"
 	ANON+=( "ok|$DASH" "ok|/smoke-exams/" "ok|/smoke-dashboard/" "ok|/smoke-products/" "404|/alz-download/0123456789abcdef0123456789abcdef/" )
 	ADMIN+=( "ok|/my-account/my-exams/" "ok|/my-account/account-security/" "ok|/smoke-exams/" "ok|/smoke-products/" )
