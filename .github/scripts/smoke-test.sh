@@ -76,7 +76,11 @@ foreach ( array( "course", "digital", "exam" ) as $kind ) {
         $post = get_post( $p->get_id() );
     }
     if ( $post ) {
-        wp_update_post( array( "ID" => $post->ID, "post_password" => "ci-product-password" ) );
+        // Re-saving an existing exam runs the plugin publish guard, which drafts exams without
+        // questions; set the password only once so a second smoke run keeps the fixture published.
+        if ( "ci-product-password" !== $post->post_password ) {
+            wp_update_post( array( "ID" => $post->ID, "post_password" => "ci-product-password" ) );
+        }
         if ( "digital" === $kind && class_exists( "ALZ_Training_Products" ) ) {
             update_post_meta( $post->ID, ALZ_Training_Products::KIND_META, ALZ_Training_Products::KIND );
         } elseif ( "exam" === $kind && class_exists( "ALZ_Exams" ) ) {

@@ -223,6 +223,8 @@ jobs:
           wp option update woocommerce_custom_orders_table_data_sync_enabled no --path="$WP_DIR" --allow-root
           wp option update woocommerce_custom_orders_table_enabled no --path="$WP_DIR" --allow-root
           CI=true wp eval-file self/.github/scripts/check-order-query-runtime.php cpt --path="$WP_DIR" --allow-root --user=admin
+          # WooCommerce refuses to switch the authoritative store while CPT-only orders are unsynced.
+          wp wc hpos sync --path="$WP_DIR" --allow-root
           wp option update woocommerce_custom_orders_table_enabled yes --path="$WP_DIR" --allow-root
           CI=true wp eval-file self/.github/scripts/check-order-query-runtime.php hpos --path="$WP_DIR" --allow-root --user=admin
       - name: Real Tutor enrollment, refunds and quiz persistence
