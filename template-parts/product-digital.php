@@ -104,8 +104,9 @@ $can_buy = $product->is_purchasable() && $product->is_in_stock();
 
 				<div class="alz-digital-product__price">
 					<?php if ( $on_sale ) : ?>
-						<del class="alz-digital-product__regular"><?php echo wp_kses_post( wc_price( $regular ) ); ?></del>
-						<ins class="alz-digital-product__sale"><?php echo wp_kses_post( wc_price( (float) $sale ) ); ?></ins>
+						<del class="alz-digital-product__regular"><?php echo wp_kses_post( wc_price( wc_get_price_to_display( $product, array( 'price' => $regular ) ) ) ); ?></del>
+						<ins class="alz-digital-product__sale"><?php echo wp_kses_post( wc_price( wc_get_price_to_display( $product, array( 'price' => (float) $sale ) ) ) ); ?></ins>
+						<?php echo wp_kses_post( $product->get_price_suffix() ); ?>
 						<?php if ( $discount_pct > 0 ) : ?>
 							<span class="alz-digital-product__discount"><?php echo esc_html( sprintf( __( 'خصم %d%%', 'alzaherah' ), $discount_pct ) ); ?></span>
 						<?php endif; ?>

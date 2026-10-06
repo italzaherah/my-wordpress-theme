@@ -67,6 +67,7 @@ if ( class_exists( 'ALZ_Exam_Promo_Images' ) ) {
 			<div class="course-single-content">
 
 				<?php do_action( 'woocommerce_before_single_product' ); ?>
+				<?php alzaherah_render_single_product_hook( 'woocommerce_before_single_product_summary' ); ?>
 
 				<?php if ( $alz_promo_ids ) : ?>
 					<section class="exam-promo-gallery" aria-labelledby="exam-promo-gallery-title">
@@ -116,6 +117,8 @@ if ( class_exists( 'ALZ_Exam_Promo_Images' ) ) {
 						<p><?php echo nl2br( esc_html( $alz_settings['instructions'] ) ); ?></p>
 					</article>
 				<?php endif; ?>
+
+				<?php alzaherah_render_single_product_hook( 'woocommerce_single_product_summary' ); ?>
 
 			</div>
 
@@ -167,6 +170,10 @@ if ( class_exists( 'ALZ_Exam_Promo_Images' ) ) {
 
 		</div>
 	</section>
+
+	<div class="container">
+		<?php alzaherah_render_single_product_hook( 'woocommerce_after_single_product_summary' ); ?>
+	</div>
 
 	<div class="course-mobile-sticky" aria-label="<?php esc_attr_e( 'إجراء الشراء السريع', 'alzaherah' ); ?>">
 		<div>

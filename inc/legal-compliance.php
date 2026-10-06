@@ -514,6 +514,7 @@ function alzaherah_sanitize_legal_profile( $input ) {
 		}
 	}
 	$clean['tax_registered'] = isset( $input['tax_registered'] ) && 'yes' === $input['tax_registered'] ? 'yes' : 'no';
+	$clean['profile_approved'] = isset( $input['profile_approved'] ) && 'yes' === $input['profile_approved'] ? 'yes' : 'no';
 	return $clean;
 }
 
@@ -581,6 +582,10 @@ function alzaherah_render_legal_settings_page() {
 				<tr>
 					<th scope="row"><?php esc_html_e( 'مسجل في ضريبة القيمة المضافة', 'alzaherah' ); ?></th>
 					<td><label><input type="checkbox" name="alzaherah_legal_profile[tax_registered]" value="yes" <?php checked( $profile['tax_registered'], 'yes' ); ?>> <?php esc_html_e( 'نعم', 'alzaherah' ); ?></label></td>
+				</tr>
+				<tr>
+					<th scope="row"><?php esc_html_e( 'اعتماد البيانات للنشر', 'alzaherah' ); ?></th>
+					<td><label><input type="checkbox" name="alzaherah_legal_profile[profile_approved]" value="yes" <?php checked( $profile['profile_approved'], 'yes' ); ?>> <?php esc_html_e( 'راجعت البيانات والمستندات الرسمية وأعتمد نشر البيانات المكتملة للزوار.', 'alzaherah' ); ?></label></td>
 				</tr>
 			</table>
 			<?php submit_button(); ?>

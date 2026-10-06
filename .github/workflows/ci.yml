@@ -27,9 +27,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        php: ['8.0', '8.1', '8.2', '8.3', '8.4']
+        php: ['8.0', '8.1', '8.2', '8.3', '8.4', '8.5']
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7.0.1
       - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
@@ -48,7 +48,7 @@ jobs:
     name: PHP 8.0+ compatibility, JS/CSS and release metadata
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7.0.1
         with:
           path: self
       - name: Check out paired repository
@@ -61,9 +61,9 @@ jobs:
           php-version: '8.3'
           coverage: none
           tools: composer
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7.0.0
         with:
-          node-version: '20'
+          node-version: '24'
       - name: Install PHPCompatibility
         run: |
           mkdir -p "$RUNNER_TEMP/phpcs" && cd "$RUNNER_TEMP/phpcs"
@@ -88,14 +88,39 @@ jobs:
             node --check "$file" || status=1
           done < <(find . -name '*.js' -not -path './.git/*' -not -path '*/node_modules/*' -print0)
           exit $status
+      - name: Focused regression tests
+        run: |
+          if [ "$KIND" = theme ]; then
+            php self/.github/scripts/check-product-regressions.php self
+            php self/.github/scripts/check-maintenance-regressions.php self
+            node self/.github/scripts/check-quantity-regressions.cjs self/assets/js/alz-qty-cart.js
+          else
+            for script in check-assessment-regressions.php check-media-workbooks.php check-selection-regressions.php check-outcome-save.php check-storage-regressions.php check-elearning-regressions.php check-legacy-media-regressions.php check-platform-regressions.php check-platform-extra.php check-uninstall-regressions.php; do
+              php "self/.github/scripts/$script" self
+            done
+            node self/.github/scripts/check-submit-regressions.cjs self
+          fi
+      - name: CSS syntax
+        run: |
+          python3 -m venv "$RUNNER_TEMP/css-parser"
+          "$RUNNER_TEMP/css-parser/bin/pip" install --quiet "tinycss2>=1.4,<2"
+          "$RUNNER_TEMP/css-parser/bin/python" self/.github/scripts/check-css.py self
+          "$RUNNER_TEMP/css-parser/bin/python" self/.github/scripts/check-css-regressions.py self/.github/scripts/check-css.py
       - name: CSS and asset references
         run: python3 self/.github/scripts/check-assets.py self paired
       - name: Release metadata and version pairing
         run: php self/.github/scripts/check-versions.php self paired
 
   smoke:
-    name: WordPress + WooCommerce smoke test
+    name: WordPress ${{ matrix.wp }} + WooCommerce ${{ matrix.woo }} (PHP ${{ matrix.php }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {php: '8.0', wp: '7.1.2', woo: '11.1.2'}
+          - {php: '8.5', wp: '7.1.2', woo: '11.1.2'}
+          - {php: '8.0', wp: '6.2', woo: '8.0.0'}
     needs: [php-lint]
     services:
       mysql:
@@ -109,8 +134,10 @@ jobs:
     env:
       WP_DIR: /tmp/wordpress
       BASE_URL: http://127.0.0.1:8080
+      WP_VERSION: ${{ matrix.wp }}
+      WOO_VERSION: ${{ matrix.woo }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7.0.1
         with:
           path: self
       - name: Check out paired repository
@@ -120,13 +147,13 @@ jobs:
         run: bash self/.github/scripts/clone-paired.sh "$PAIRED_BRANCH" paired
       - uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.3'
+          php-version: ${{ matrix.php }}
           extensions: mysqli, zip, gd, intl, mbstring
           coverage: none
           tools: wp-cli
       - name: Install WordPress and WooCommerce
         run: |
-          wp core download --path="$WP_DIR" --allow-root
+          wp core download --version="$WP_VERSION" --path="$WP_DIR" --allow-root
           wp config create --path="$WP_DIR" --dbname=wordpress --dbuser=root --dbpass=root --dbhost=127.0.0.1 --allow-root \
             --extra-php <<'PHP'
           define( 'WP_DEBUG', true );
@@ -137,12 +164,38 @@ jobs:
           wp core install --path="$WP_DIR" --url="$BASE_URL" --title=CI --admin_user=admin --admin_password=admin \
             --admin_email=ci@example.com --skip-email --allow-root
           wp rewrite structure '/%postname%/' --path="$WP_DIR" --allow-root
-          wp plugin install woocommerce --activate --path="$WP_DIR" --allow-root
+          wp plugin install woocommerce --version="$WOO_VERSION" --activate --path="$WP_DIR" --allow-root
           wp option update woocommerce_coming_soon no --path="$WP_DIR" --allow-root
           wp eval 'WC_Install::create_pages();' --path="$WP_DIR" --allow-root
+      - name: Seed the previous release before upgrading
+        if: env.KIND == 'plugin' && matrix.php == '8.0' && matrix.wp == '7.1.2'
+        run: |
+          git -C self fetch --depth=1 origin 88174ea6a029538ae417440e6294c435b6191502
+          git -C paired fetch --depth=1 origin 565d05965139310e2535b9d910b5738de6fc8ca9
+          mkdir -p /tmp/alz-old-plugin /tmp/alz-old-theme
+          git -C self archive 88174ea6a029538ae417440e6294c435b6191502 | tar -x -C /tmp/alz-old-plugin
+          git -C paired archive 565d05965139310e2535b9d910b5738de6fc8ca9 | tar -x -C /tmp/alz-old-theme
+          ln -s /tmp/alz-old-plugin "$WP_DIR/wp-content/plugins/$PLUGIN_SLUG"
+          ln -s /tmp/alz-old-theme "$WP_DIR/wp-content/themes/$THEME_SLUG"
+          wp plugin activate "$PLUGIN_SLUG" --path="$WP_DIR" --allow-root
+          wp theme activate "$THEME_SLUG" --path="$WP_DIR" --allow-root
+          wp eval '
+            $p = new WC_Product_Simple(); $p->set_name("CI upgrade preserved product"); $p->set_slug("ci-upgrade-product");
+            $p->set_regular_price("17.50"); $p->set_status("publish"); $p->save();
+            $order = wc_create_order(); $order->add_product($p, 1); $order->update_meta_data("_ci_upgrade_marker", "preserved"); $order->calculate_totals(); $order->save();
+            update_option("ci_upgrade_fixture", array("product"=>$p->get_id(), "order"=>$order->get_id(), "total"=>$order->get_total()), false);
+            echo "Upgrade baseline Core " . ALZ_CORE_VERSION . "; Theme " . wp_get_theme()->get("Version") . "\n";
+          ' --path="$WP_DIR" --allow-root
+          # Keep the existing activation/theme options: replace files as a real update does.
+          unlink "$WP_DIR/wp-content/plugins/$PLUGIN_SLUG"
+          unlink "$WP_DIR/wp-content/themes/$THEME_SLUG"
       - name: Install and activate the plugin and theme
         run: |
           if [ "$KIND" = plugin ]; then plugin_src=self; theme_src=paired; else plugin_src=paired; theme_src=self; fi
+          if [ "$KIND" = plugin ] && [ ! -f "$theme_src/style.css" ]; then
+            echo "::error::integrated plugin smoke test requires the paired theme"
+            exit 1
+          fi
           with_plugin=0
           if [ -f "$plugin_src/$PLUGIN_SLUG.php" ]; then
             ln -s "$GITHUB_WORKSPACE/$plugin_src" "$WP_DIR/wp-content/plugins/$PLUGIN_SLUG"
@@ -155,19 +208,58 @@ jobs:
           fi
           wp rewrite flush --path="$WP_DIR" --allow-root
           echo "WITH_PLUGIN=$with_plugin" >> "$GITHUB_ENV"
+      - name: Verify data retained through the upgrade
+        if: env.KIND == 'plugin' && matrix.php == '8.0' && matrix.wp == '7.1.2'
+        run: |
+          wp eval '
+            $f=get_option("ci_upgrade_fixture"); $p=wc_get_product($f["product"]); $o=wc_get_order($f["order"]);
+            if (!$p || "17.50" !== wc_format_decimal($p->get_regular_price(),2) || !$o || "preserved" !== $o->get_meta("_ci_upgrade_marker") || (string)$f["total"] !== (string)$o->get_total()) { throw new Exception("Upgrade lost product/order data"); }
+            if ("3.7.0" !== ALZ_CORE_VERSION || "4.14.2" !== wp_get_theme()->get("Version")) { throw new Exception("Unexpected upgraded version pair"); }
+            echo "Upgrade product, order, metadata and totals retained; Core3.7.0/Theme4.14.2 active\n";
+          ' --path="$WP_DIR" --allow-root
+      - name: Real order metadata queries in CPT and HPOS
+        if: env.KIND == 'plugin'
+        run: |
+          wp option update woocommerce_custom_orders_table_data_sync_enabled no --path="$WP_DIR" --allow-root
+          wp option update woocommerce_custom_orders_table_enabled no --path="$WP_DIR" --allow-root
+          CI=true wp eval-file self/.github/scripts/check-order-query-runtime.php cpt --path="$WP_DIR" --allow-root --user=admin
+          wp option update woocommerce_custom_orders_table_enabled yes --path="$WP_DIR" --allow-root
+          CI=true wp eval-file self/.github/scripts/check-order-query-runtime.php hpos --path="$WP_DIR" --allow-root --user=admin
+      - name: Real Tutor enrollment, refunds and quiz persistence
+        if: env.KIND == 'plugin' && matrix.php == '8.0' && matrix.wp == '7.1.2'
+        run: |
+          wp plugin install tutor --activate --path="$WP_DIR" --allow-root
+          wp plugin get tutor --field=version --path="$WP_DIR" --allow-root
+          CI=true wp eval-file self/.github/scripts/check-elearning-runtime.php --path="$WP_DIR" --allow-root --user=admin
+      - name: Record tested versions
+        run: |
+          echo "Self commit: $(git -C self rev-parse HEAD)"
+          if [ -d paired/.git ]; then echo "Paired commit: $(git -C paired rev-parse HEAD)"; fi
+          wp core version --path="$WP_DIR" --allow-root
+          wp plugin get woocommerce --field=version --path="$WP_DIR" --allow-root
+          php --version
       - name: Run smoke test
         run: |
           php -S 127.0.0.1:8080 -t "$WP_DIR" "$GITHUB_WORKSPACE/self/.github/scripts/router.php" > /tmp/php-server.log 2>&1 &
           sleep 2
           BASE_URL="$BASE_URL" DEBUG_LOG=/tmp/wp-debug.log WP="wp --path=$WP_DIR --allow-root" OUT_DIR=/tmp/smoke \
             bash self/.github/scripts/smoke-test.sh
+      - name: Plugin with the default WordPress theme
+        if: env.KIND == 'plugin'
+        run: |
+          default_theme=$(wp theme list --field=name --path="$WP_DIR" --allow-root | grep '^twenty' | head -1)
+          test -n "$default_theme"
+          wp theme activate "$default_theme" --path="$WP_DIR" --allow-root
+          BASE_URL="$BASE_URL" DEBUG_LOG=/tmp/wp-debug.log WP="wp --path=$WP_DIR --allow-root" OUT_DIR=/tmp/smoke-default \
+            bash self/.github/scripts/smoke-test.sh
       - name: Upload responses and logs on failure
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: smoke-output
+          name: smoke-${{ matrix.wp }}-${{ matrix.php }}
           path: |
             /tmp/smoke
+            /tmp/smoke-default
             /tmp/wp-debug.log
             /tmp/php-server.log
           if-no-files-found: ignore

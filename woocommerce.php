@@ -202,6 +202,12 @@ if ( function_exists( 'is_shop' ) && ( is_shop() || is_product_taxonomy() || $al
 		</section>
 	</main>
 	<?php
+elseif ( function_exists( 'is_product' ) && is_product() && post_password_required() ) :
+	// Match WooCommerce's single-product password gate before any custom metadata,
+	// promotional images, purchase controls or extension callbacks are rendered.
+	?>
+	<main id="main" class="section" role="main"><div class="container"><?php echo get_the_password_form(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- WordPress-generated password form. ?></div></main>
+	<?php
 elseif ( function_exists( 'is_product' ) && is_product() && function_exists( 'alz_core_is_exam_product' ) && alz_core_is_exam_product( get_queried_object_id() ) ) :
 
 	while ( have_posts() ) :

@@ -10,8 +10,14 @@ if ( '/' !== $alz_ci_path && is_file( $alz_ci_root . $alz_ci_path ) ) {
 $alz_ci_dir = rtrim( $alz_ci_path, '/' );
 if ( '' !== $alz_ci_dir && is_dir( $alz_ci_root . $alz_ci_dir ) && is_file( $alz_ci_root . $alz_ci_dir . '/index.php' ) ) {
 	chdir( $alz_ci_root . $alz_ci_dir );
+	$_SERVER['SCRIPT_FILENAME'] = $alz_ci_root . $alz_ci_dir . '/index.php';
+	$_SERVER['SCRIPT_NAME'] = $alz_ci_dir . '/index.php';
+	$_SERVER['PHP_SELF'] = $_SERVER['SCRIPT_NAME'];
 	require $alz_ci_root . $alz_ci_dir . '/index.php';
 	return;
 }
 chdir( $alz_ci_root );
+$_SERVER['SCRIPT_FILENAME'] = $alz_ci_root . '/index.php';
+$_SERVER['SCRIPT_NAME'] = '/index.php';
+$_SERVER['PHP_SELF'] = '/index.php';
 require $alz_ci_root . '/index.php';

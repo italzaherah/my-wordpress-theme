@@ -5,7 +5,8 @@
 	'use strict';
 
 	function parseQty(value) {
-		var n = parseInt(String(value).trim(), 10);
+		var raw = String(value == null ? '' : value).trim();
+		var n = raw === '' ? NaN : Number(raw);
 		return Number.isFinite(n) ? n : NaN;
 	}
 
@@ -27,16 +28,20 @@
 		var minus = root.querySelector('[data-alz-qty-minus]');
 		var plus = root.querySelector('[data-alz-qty-plus]');
 		if (!input) return;
+		// Sold-individually and readonly quantities belong to WooCommerce.
+		if (input.readOnly || input.disabled || input.getAttribute('type') === 'hidden') return;
 
 		var lastValid = parseQty(input.value);
-		if (!Number.isFinite(lastValid) || lastValid < 1) lastValid = 1;
+		if (!Number.isFinite(lastValid)) lastValid = limits().min;
 
 		function limits() {
 			var min = parseQty(input.getAttribute('min'));
 			var max = parseQty(input.getAttribute('max'));
-			if (!Number.isFinite(min) || min < 1) min = 1;
+			var step = parseQty(input.getAttribute('step'));
+			if (!Number.isFinite(min)) min = 1;
 			if (!Number.isFinite(max)) max = Infinity;
-			return { min: min, max: max };
+			if (!Number.isFinite(step) || step <= 0) step = 1;
+			return { min: min, max: max, step: step };
 		}
 
 		// An emptied or non-numeric field steps from the last valid quantity instead of NaN.
@@ -47,6 +52,8 @@
 
 		function setValue(n, announceMsg) {
 			var lim = limits();
+			// Avoid binary floating-point tails for extension-provided decimal steps.
+			n = Number(n.toPrecision(12));
 			n = clamp(n, lim.min, lim.max);
 			input.value = String(n);
 			lastValid = n;
@@ -58,18 +65,18 @@
 
 		function commitTyped() {
 			var raw = String(input.value).trim();
-			if (!/^\d+$/.test(raw)) {
+			if (!/^(?:\d+(?:\.\d*)?|\.\d+)$/.test(raw)) {
 				input.value = String(lastValid);
 				announce(root, 'كمية غير صالحة. أُعيدت الكمية السابقة.');
 				return;
 			}
 			var n = parseQty(raw);
-			if (!Number.isFinite(n) || n < 1) {
+			var lim = limits();
+			if (!Number.isFinite(n) || n < lim.min) {
 				input.value = String(lastValid);
-				announce(root, 'الحد الأدنى للكمية هو 1.');
+				announce(root, 'الحد الأدنى للكمية هو ' + lim.min + '.');
 				return;
 			}
-			var lim = limits();
 			if (Number.isFinite(lim.max) && lim.max > 0 && n > lim.max) {
 				setValue(lim.max, 'الحد الأقصى هو %d');
 				return;
@@ -79,12 +86,12 @@
 
 		if (minus) {
 			minus.addEventListener('click', function () {
-				setValue(current() - 1, 'الكمية %d');
+				setValue(current() - limits().step, 'الكمية %d');
 			});
 		}
 		if (plus) {
 			plus.addEventListener('click', function () {
-				setValue(current() + 1, 'الكمية %d');
+				setValue(current() + limits().step, 'الكمية %d');
 			});
 		}
 		input.addEventListener('blur', commitTyped);
@@ -94,10 +101,10 @@
 				commitTyped();
 			} else if (e.key === 'ArrowUp') {
 				e.preventDefault();
-				setValue(current() + 1, 'الكمية %d');
+				setValue(current() + limits().step, 'الكمية %d');
 			} else if (e.key === 'ArrowDown') {
 				e.preventDefault();
-				setValue(current() - 1, 'الكمية %d');
+				setValue(current() - limits().step, 'الكمية %d');
 			}
 		});
 	}
